@@ -1089,6 +1089,26 @@
             .result-route-num { width:46px!important; font-size:17px!important; }
             .search-section-title { font-size:20px!important; }
         }
+        /* 使用者要求：收藏列採大型站牌比例，讓路線號與目的地優先於次要資料。 */
+        .station-group-list .route-card { min-height:62px!important; padding:7px 12px 7px 8px!important; }
+        .station-group-list .bus-left { gap:12px!important; min-width:0!important; }
+        .station-group-list .route-badge { min-width:74px!important; height:42px!important; padding:0 9px!important; border-radius:6px!important; font-size:22px!important; font-weight:900!important; letter-spacing:-.055em!important; }
+        .station-group-list .destination { font-family:var(--font-ui)!important; font-size:20px!important; font-weight:850!important; line-height:1.15!important; letter-spacing:-.045em!important; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+        .station-group-list .fare-watermark { font-size:21px!important; margin-right:7px!important; opacity:.53!important; }
+        .station-group-list .eta-list { min-width:58px!important; }
+        .station-group-list .eta-primary strong { font-size:25px!important; }
+        .station-group-list .eta-secondary strong { font-size:16px!important; }
+        .station-group-list .eta-arriving-pulse { font-size:19px!important; }
+        @media (max-width:520px) {
+            .station-group-list .route-card { min-height:56px!important; padding:6px 9px 6px 7px!important; }
+            .station-group-list .bus-left { gap:9px!important; }
+            .station-group-list .route-badge { min-width:60px!important; height:36px!important; padding:0 7px!important; font-size:18px!important; }
+            .station-group-list .destination { font-size:17px!important; }
+            .station-group-list .fare-watermark { font-size:18px!important; margin-right:4px!important; }
+            .station-group-list .eta-list { min-width:48px!important; }
+            .station-group-list .eta-primary strong { font-size:21px!important; }
+            .station-group-list .eta-secondary strong { font-size:14px!important; }
+        }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {

@@ -1,5 +1,5 @@
 /* HK Bus ETA PWA service worker: retain the app shell and previously viewed assets offline. */
-const CACHE_NAME = "hk-bus-eta-shell-v2";
+const CACHE_NAME = "hk-bus-eta-shell-v3";
 const APP_SHELL = ["./", "./index.html", "./busapp-improved.html", "./manifest.webmanifest", "./icons/bus-eta-icon.svg"];
 
 self.addEventListener("install", (event) => {
@@ -26,7 +26,7 @@ self.addEventListener("fetch", (event) => {
   };
 
   if (request.mode === "navigate") {
-    event.respondWith(fetch(request).then(cacheResponse).catch(() => caches.match(request).then((cached) => cached || caches.match("./index.html"))));
+    event.respondWith(fetch(new Request(request, { cache: "no-store" })).then(cacheResponse).catch(() => caches.match(request).then((cached) => cached || caches.match("./index.html"))));
     return;
   }
 

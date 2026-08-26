@@ -1810,6 +1810,56 @@
                             } catch(e) { this.renderETAInContainer(null, `${containerPrefix}${s.seq}`); }
                         }));
                     }
+                } else if (operator === 'lightRail') {
+                    const destination = routeObj.dest || routeObj.destinations || '';
+                    const fetchStationEtas = async (s) => {
+                        try {
+                            const stationId = String(s.id || s.stopId || '').replace(/^LR/i, '');
+                            const extractEtas = (res) => {
+                                const values = [];
+                                (res?.platform_list || []).forEach(platform => (platform.route_list || [])
+                                    .filter(item => (String(item.route_no) === String(route) || String(item.additionalInfo1) === String(route)) && (!destination || item.dest_ch === destination || String(item.dest_en || '').includes('Circular')) && Number(item.stop) === 0)
+                                    .forEach(item => {
+                                        const minutes = Number.parseInt(item.time_en, 10);
+                                        const seconds = Number.isFinite(minutes) ? minutes * 60 : 0;
+                                        values.push(new Date(Date.now() + seconds * 1000).toISOString());
+                                    }));
+                                return values;
+                            };
+                            let res = await this.fetchJSON(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stationId}&with_special=1`);
+                            let etas = extractEtas(res);
+                            if (etas.length === 0) {
+                                await new Promise(resolve => setTimeout(resolve, 280));
+                                res = await this.fetchJSON(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stationId}&with_special=1`);
+                                etas = extractEtas(res);
+                            }
+                            this.renderETAInContainer(etas, `${containerPrefix}${s.seq}`, opColorClass);
+                        } catch (e) { this.renderETAInContainer(null, `${containerPrefix}${s.seq}`, opColorClass); }
+                    };
+                    await Promise.all(stops.map(fetchStationEtas));
+                } else if (operator === 'lrtfeeder') {
+                    try {
+                        const scheduleRequest = () => this.fetchJSON('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
+                            method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language: 'zh', routeName: String(route) })
+                        });
+                        const extractEtas = (res, stop) => ((res?.busStop || []).find(item => item.busStopId === (stop.id || stop.stopId))?.bus || []).map(bus => {
+                            const rawSeconds = String(bus.arrivalTimeInSecond) === '108000' ? bus.departureTimeInSecond : bus.arrivalTimeInSecond;
+                            const seconds = Number(rawSeconds || 0);
+                            return Number.isFinite(seconds) ? new Date(Date.now() + seconds * 1000).toISOString() : null;
+                        }).filter(Boolean);
+                        let res = await scheduleRequest();
+                        let needsRetry = stops.every(s => extractEtas(res, s).length === 0);
+                        if (needsRetry) {
+                            await new Promise(resolve => setTimeout(resolve, 280));
+                            res = await scheduleRequest();
+                        }
+                        stops.forEach(s => {
+                            const etas = extractEtas(res, s);
+                            this.renderETAInContainer(etas, `${containerPrefix}${s.seq}`, opColorClass);
+                        });
+                    } catch (e) { stops.forEach(s => this.renderETAInContainer(null, `${containerPrefix}${s.seq}`, opColorClass)); }
+                } else {
+                    stops.forEach(s => this.renderETAInContainer([], `${containerPrefix}${s.seq}`, opColorClass));
                 }
             },
 
@@ -2412,7 +2462,7 @@
                         </div>`;
                     });
                     resultsArea.innerHTML = listHtml + '</div>';
-                    this.loadAllETAsForList(stops, this.state.activeSearchRouteData, 'search-eta-');
+                    await this.loadAllETAsForList(stops, this.state.activeSearchRouteData, 'search-eta-');
 
                 } catch(e) { resultsArea.innerHTML = '<div class="status-message">獲取車站失敗，請檢查網路連線。</div>'; }
             },

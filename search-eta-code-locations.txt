@@ -1,0 +1,34 @@
+964:        .route-card.op-lightRail { border-left-color:#ffffff!important; box-shadow:inset 6px 0 0 #ffffff, inset 7px 0 0 #1b2b34!important; }
+970:        .route-badge.bg-lightRail { color:#1b2b34; border:1px solid #1b2b34; background:#fff; box-shadow:none!important; }
+1364:                const targetStopId = operator === 'lightRail'
+1365:                    ? (routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lightrail_stop)
+1381:                if (!['lightRail', 'lrtfeeder'].includes(operator) || !this.state.routeList || !this.state.stopList) return route;
+1394:                const legacyStopId = operator === 'lightRail'
+1395:                    ? (route.lightRail_stop || route.lightRail_stopId || route.lrt_stop || route.lightrail_stop || route.stopId || route.stop)
+1407:                if (operator === 'lightRail' && stopId) route.lightRail_stop = stopId;
+1703:                if (operator === 'lightRail') return '#ffffff';
+1710:                if (['lightrail', 'lrt'].includes(key)) return 'lightRail';
+1729:            async loadAllETAsForList(stops, routeObj, containerPrefix) {
+1813:                } else if (operator === 'lightRail') {
+1932:                const CO_NAME = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lightRail:'輕鐵', lrtfeeder:'港鐵巴士', mtr:'港鐵', lrt:'輕鐵' };
+1933:                const fareColors = { kmb:'#ce3043', ctb:'#f4c400', nlb:'#0072c6', gmb:'#008f4c', lightRail:'#1b2b34', lrtfeeder:'#f57c00' };
+1934:                const bgClass = { kmb:'bg-kmb', ctb:'bg-ctb', nlb:'bg-nlb', gmb:'bg-gmb', lightRail:'bg-lightRail', lrtfeeder:'bg-lrtfeeder' };
+2091:                    const CO_NAME  = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lrtfeeder:'港鐵巴士', lightRail:'輕鐵', mtr:'港鐵', lrt:'輕鐵' };
+2092:                    const CO_ORDER = ['kmb','ctb','nlb','gmb','lrtfeeder','lightRail'];
+2097:                        if (r.co.every(c => ['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(c))) return; // 排除港鐵及渡輪；保留 lightRail/lrtfeeder
+2105:                            if (['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(co)) return; // 排除港鐵及渡輪；保留 lightRail/lrtfeeder
+2346:                        <div class="result-item" style="height:auto; padding:6px 12px;" onclick="app.selectRouteDirection(${idx})">
+2370:            async selectRouteDirection(index) {
+2467:                    await this.loadAllETAsForList(stops, this.state.activeSearchRouteData, 'search-eta-');
+2483:                else if (op === 'lightRail') { newRoute.lightRail_stop = stop.id || stop.stopId; newRoute.lightRail_dest = routeContext.dest || routeContext.destinations || ''; }
+2490:                return this.state.savedRoutes.some(r => r.route === target.route && r.stopName === target.stopName && (r.kmb_dir === target.kmb_dir || r.ctb_dir === target.ctb_dir || r.nlb_routeId === target.nlb_routeId || r.gmb_routeId === target.gmb_routeId || r.lightRail_stop === target.lightRail_stop || r.lrtfeeder_stop === target.lrtfeeder_stop));
+2494:                const existingIndex = this.state.savedRoutes.findIndex(r => r.route === newRoute.route && r.stopName === newRoute.stopName && (r.kmb_dir === newRoute.kmb_dir || r.ctb_dir === newRoute.ctb_dir || r.nlb_routeId === newRoute.nlb_routeId || r.gmb_routeId === newRoute.gmb_routeId || r.lightRail_stop === newRoute.lightRail_stop || r.lrtfeeder_stop === newRoute.lrtfeeder_stop));
+2558:                        } else if (op === 'lightRail') {
+2559:                            const stationId = String(route.lightRail_stop || route.lightRail_stopId || route.lrt_stop || route.lightrail_stop || route.stopId || route.stop || '').replace(/^LR/i, '');
+2561:                            const destination = route.lightRail_dest || route.destinations || '';
+2597:                        else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'lightRail') { badgeClass = 'bg-lightRail'; opTint = 'op-lightRail'; }
+2623:                                const stopId = rObj.kmb_stop || rObj.ctb_stop || rObj.nlb_stopId || rObj.gmb_stopId || rObj.lightRail_stop || rObj.lrtfeeder_stop;
+2811:                    if (routeObj.kmb_stop || routeObj.ctb_stop || routeObj.nlb_stopId || routeObj.gmb_stopId || routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lrtfeeder_stop || routeObj.irtfeeder_stop || routeObj.mtrfeeder_stop) {
+2812:                        targetStopId = operator === 'kmb' ? routeObj.kmb_stop : (operator === 'ctb' ? routeObj.ctb_stop : (operator === 'nlb' ? routeObj.nlb_stopId : (operator === 'lightRail' ? (routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lightrail_stop) : (operator === 'lrtfeeder' ? (routeObj.lrtfeeder_stop || routeObj.irtfeeder_stop || routeObj.mtrfeeder_stop || routeObj.mtrbus_stop) : routeObj.gmb_stopId))));
+2857:                    } else if (operator === 'lightRail' || operator === 'lrtfeeder') {
+2961:                    this.loadAllETAsForList(stops, routeObj, 'map-eta-');

@@ -910,6 +910,29 @@
             #bus-container .status-message::before { max-width:calc(100% - 76px); font-size:12px; }
             #bus-container .status-message::after { width:58px; min-height:58px; font-size:9px; }
         }
+
+        /* User-requested simplification: remove the homepage slogan and table column header. */
+        #view-favourites::before { display: none !important; }
+        #bus-container { border-top: 0; }
+        #bus-container::before { display: none; }
+
+        /* Station groups: one station header, many route ETA rows. */
+        #bus-container { overflow: visible; background: transparent; border-bottom: 0; }
+        .station-group { margin: 0 0 14px; border: 1px solid var(--eta-line); background: rgba(255,253,250,.88); box-shadow: 0 3px 0 rgba(11,30,50,.035); }
+        .station-group-header { display: flex; align-items: center; min-height: 46px; padding: 8px 12px; gap: 10px; color: var(--eta-ink); border-bottom: 2px solid var(--eta-ink); background: linear-gradient(90deg, var(--eta-yellow) 0 8px, rgba(255,253,250,.98) 8px); }
+        .station-group-kicker { color: var(--eta-ink-soft); font-family: var(--font-data); font-size: 9px; font-weight: 800; letter-spacing: .10em; }
+        .station-group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); font-size: 15px; font-weight: 800; letter-spacing: -.025em; }
+        .station-group-count { display: grid; min-width: 22px; height: 22px; place-content: center; color: var(--eta-ink); font-family: var(--font-data); font-size: 10px; font-weight: 800; border: 1px solid var(--eta-ink); background: var(--eta-yellow); }
+        .station-group-list .route-card { margin: 0 !important; }
+        .station-group-list .route-card:last-child { border-bottom: 0 !important; }
+        .station-group-list .route-card .station-name-sub { display: none; }
+        .station-group-list .route-card .bus-left { pointer-events: none; }
+
+        /* Narrow reading column on large screens. */
+        @media (min-width: 900px) {
+            #view-favourites, #view-routes, #view-planner { max-width: 620px; }
+            #view-favourites .footer-actions { max-width: 620px; }
+        }
     </style>
 </head>
 <body>
@@ -2367,8 +2390,10 @@
                     }));
 
                     container.innerHTML = '';
-                    routesData.forEach(item => {
+                    const stationGroups = new Map();
+                    routesData.forEach((item, savedIndex) => {
                         const cardDiv = document.createElement('div'); cardDiv.className = 'route-card clickable';
+                        cardDiv.dataset.savedIndex = String(savedIndex);
                         cardDiv.onclick = (e) => { if (!e.target.closest('.delete-route-btn') && !e.target.closest('.drag-handle')) this.openMapModal(item.route); };
 
                         let badgeClass = 'bg-kmb'; let opClass = 'arriving-kmb'; let opTint = 'op-kmb';
@@ -2420,7 +2445,26 @@
                             <div class="eta-list" style="display:flex; flex-direction:column; align-items:flex-end;">${etaHtml}</div>
                             <button class="delete-route-btn" onclick="event.stopPropagation(); app.deleteRoute(this)">×</button>
                         `;
-                        container.appendChild(cardDiv);
+                        const stationName = item.route.stopName || '未命名車站';
+                        let group = stationGroups.get(stationName);
+                        if (!group) {
+                            group = document.createElement('section');
+                            group.className = 'station-group';
+                            group.innerHTML = `
+                                <div class="station-group-header">
+                                    <span class="station-group-kicker">STOP</span>
+                                    <span class="station-group-name"></span>
+                                    <span class="station-group-count">0</span>
+                                </div>
+                                <div class="station-group-list"></div>
+                            `;
+                            group.querySelector('.station-group-name').textContent = stationName;
+                            stationGroups.set(stationName, group);
+                            container.appendChild(group);
+                        }
+                        const groupList = group.querySelector('.station-group-list');
+                        groupList.appendChild(cardDiv);
+                        group.querySelector('.station-group-count').textContent = String(groupList.children.length);
                     });
                 } catch(e) {}
             },
@@ -2441,31 +2485,51 @@
                 }
             },
 
+            setupStationSortables(container) {
+                if (typeof Sortable === 'undefined') return;
+                this.state.sortableInstance = Array.from(container.querySelectorAll('.station-group-list')).map(list =>
+                    new Sortable(list, {
+                        handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
+                        onEnd: () => {
+                            const order = Array.from(container.querySelectorAll('.route-card')).map(card => Number(card.dataset.savedIndex));
+                            this.state.savedRoutes = order.map(index => this.state.savedRoutes[index]);
+                            this.saveData(false);
+                            this.renderBuses().then(() => {
+                                if (this.state.isEditMode) {
+                                    container.classList.add('edit-mode');
+                                    this.setupStationSortables(container);
+                                }
+                            });
+                        }
+                    })
+                );
+            },
             toggleEditMode() {
                 if (this.state.savedRoutes.length === 0) return alert("目前沒有路線可以編輯喔！");
                 this.state.isEditMode = !this.state.isEditMode;
                 const container = document.getElementById('bus-container'); const editBtn = document.getElementById('edit-btn');
                 if (this.state.isEditMode) {
                     container.classList.add('edit-mode'); editBtn.style.color = 'var(--apple-blue)'; 
-                    if (typeof Sortable !== 'undefined') {
-                        this.state.sortableInstance = new Sortable(container, {
-                            handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost', 
-                            onEnd: (evt) => {
-                                const movedItem = this.state.savedRoutes.splice(evt.oldIndex, 1)[0];
-                                this.state.savedRoutes.splice(evt.newIndex, 0, movedItem); this.saveData(false); 
-                            }
-                        });
-                    }
+                    this.setupStationSortables(container);
                 } else {
                     container.classList.remove('edit-mode'); editBtn.style.color = 'var(--text-main)'; 
-                    if (this.state.sortableInstance) { this.state.sortableInstance.destroy(); this.state.sortableInstance = null; }
+                    if (Array.isArray(this.state.sortableInstance)) this.state.sortableInstance.forEach(instance => instance.destroy());
+                    else if (this.state.sortableInstance) this.state.sortableInstance.destroy();
+                    this.state.sortableInstance = null;
                     this.manualRefresh();
                 }
             },
-            deleteRoute(btnElement) {
-                const card = btnElement.closest('.route-card'); const index = Array.from(document.getElementById('bus-container').children).indexOf(card);
-                this.state.savedRoutes.splice(index, 1); this.saveData(false); card.remove(); 
-                if (this.state.savedRoutes.length === 0) this.toggleEditMode();
+            async deleteRoute(btnElement) {
+                const card = btnElement.closest('.route-card');
+                const index = Number(card.dataset.savedIndex);
+                this.state.savedRoutes.splice(index, 1); this.saveData(false);
+                if (this.state.savedRoutes.length === 0) { this.toggleEditMode(); return; }
+                await this.renderBuses();
+                if (this.state.isEditMode) {
+                    const container = document.getElementById('bus-container');
+                    container.classList.add('edit-mode');
+                    this.setupStationSortables(container);
+                }
             },
 
             // --- 地圖與標記邏輯 ---

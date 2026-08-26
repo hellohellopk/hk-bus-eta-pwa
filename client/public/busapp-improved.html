@@ -956,10 +956,19 @@
         .refresh-eta-status { display:none; align-self:center; color:var(--eta-muted); font-family:var(--font-data); font-size:10px; font-weight:700; }
         .refresh-eta-status.visible { display:inline; }
         @keyframes eta-refresh-spin { to { transform:rotate(360deg); } }
-        .route-card.op-lightRail { border-left-color:#008c45!important; }
-        .route-card.op-lrtfeeder { border-left-color:#1674c4!important; }
-        .route-badge.bg-lightRail { color:#fff; background:#008c45; }
-        .route-badge.bg-lrtfeeder { color:#fff; background:#1674c4; }
+        /* 營辦商顏色：城巴／新巴黃、九巴紅、小巴綠、嶼巴藍、輕鐵白、港鐵巴士橙。 */
+        .route-card.op-kmb { border-left-color:#ce3043!important; }
+        .route-card.op-ctb { border-left-color:#f4c400!important; }
+        .route-card.op-gmb { border-left-color:#008f4c!important; }
+        .route-card.op-nlb { border-left-color:#0072c6!important; }
+        .route-card.op-lightRail { border-left-color:#ffffff!important; box-shadow:inset 6px 0 0 #ffffff, inset 7px 0 0 #1b2b34!important; }
+        .route-card.op-lrtfeeder { border-left-color:#f57c00!important; }
+        .route-badge.bg-kmb { color:#fff; background:#ce3043; }
+        .route-badge.bg-ctb { color:#111; background:#f4c400; }
+        .route-badge.bg-gmb { color:#fff; background:#008f4c; }
+        .route-badge.bg-nlb { color:#fff; background:#0072c6; }
+        .route-badge.bg-lightRail { color:#1b2b34; border:1px solid #1b2b34; background:#fff; box-shadow:none!important; }
+        .route-badge.bg-lrtfeeder { color:#fff; background:#f57c00; }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {
@@ -1342,6 +1351,7 @@
             },
 
             getDatabaseRouteStops(routeObj, operator) {
+                operator = this.normalizeOperator(operator);
                 const routeList = this.state.routeList || {};
                 const desiredDestination = routeObj.destinations || routeObj.dest || '';
                 let routeEntry = routeObj.routeKey ? routeList[routeObj.routeKey] : null;
@@ -1351,7 +1361,9 @@
                         (!desiredDestination || entry.dest?.zh === desiredDestination || entry.dest?.en === desiredDestination)
                     ) || Object.values(routeList).find(entry => entry.route === routeObj.route && entry.co?.includes(operator));
                 }
-                const targetStopId = operator === 'lightRail' ? routeObj.lightRail_stop : routeObj.lrtfeeder_stop;
+                const targetStopId = operator === 'lightRail'
+                    ? (routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lightrail_stop)
+                    : (routeObj.lrtfeeder_stop || routeObj.irtfeeder_stop || routeObj.mtrfeeder_stop || routeObj.mtrbus_stop);
                 const stopIds = routeEntry?.stops?.[operator] || (targetStopId ? [targetStopId] : []);
                 return stopIds.map((id, index) => {
                     const stop = this.state.stopList?.[id] || {};
@@ -1652,10 +1664,20 @@
                                .filter(item => item.min !== null && item.min >= 0).slice(0, 2);
             },
             getPrimaryColor(operator) {
+                operator = this.normalizeOperator(operator);
                 if (operator === 'ctb') return '#fccc0a';
                 if (operator === 'nlb') return '#0072c6';
                 if (operator === 'gmb') return '#008f4c';
+                if (operator === 'lightRail') return '#ffffff';
+                if (operator === 'lrtfeeder') return '#f57c00';
                 return '#ce3043'; 
+            },
+            normalizeOperator(operator) {
+                const raw = String(operator || '').trim();
+                const key = raw.toLowerCase().replace(/[\s_-]/g, '');
+                if (['lightrail', 'lrt'].includes(key)) return 'lightRail';
+                if (['lrtfeeder', 'irtfeeder', 'mtrfeeder', 'mtrbus'].includes(key)) return 'lrtfeeder';
+                return raw;
             },
 
             renderETAInContainer(etaArray, elementId, operatorClass = 'arriving-kmb') {
@@ -1673,7 +1695,7 @@
             },
 
             async loadAllETAsForList(stops, routeObj, containerPrefix) {
-                let operator = routeObj.operator || (Array.isArray(routeObj.operators) ? routeObj.operators[0] : routeObj.operators);
+                let operator = this.normalizeOperator(routeObj.operator || (Array.isArray(routeObj.operators) ? routeObj.operators[0] : routeObj.operators));
                 let route = routeObj.route; let opColorClass = `arriving-${operator}`;
                 
                 stops.forEach(s => {
@@ -1767,8 +1789,8 @@
                 if (op === 'ctb') return '#ff9500';
                 if (op === 'nlb') return '#007aff';
                 if (op === 'gmb') return '#34c759';
-                if (op === 'lightrail') return '#008c45';
-                if (op === 'lrtfeeder') return '#1674c4';
+                if (op === 'lightrail') return '#1b2b34';
+                if (op === 'lrtfeeder') return '#f57c00';
                 return '#3a3a3c';
             },
 
@@ -1823,9 +1845,9 @@
 
                 const norm = s => String(s||'').toLowerCase().replace(/\s+/g,'');
                 const okw = norm(originKw), dkw = norm(destKw);
-                const CO_NAME = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', mtr:'港鐵巴士', lrt:'輕鐵' };
-                const fareColors = { kmb:'#ff3b30', ctb:'#ff9500', nlb:'#007aff', gmb:'#34c759' };
-                const bgClass = { kmb:'bg-kmb', ctb:'bg-ctb', nlb:'bg-nlb', gmb:'bg-gmb' };
+                const CO_NAME = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lightRail:'輕鐵', lrtfeeder:'港鐵巴士', mtr:'港鐵', lrt:'輕鐵' };
+                const fareColors = { kmb:'#ce3043', ctb:'#f4c400', nlb:'#0072c6', gmb:'#008f4c', lightRail:'#1b2b34', lrtfeeder:'#f57c00' };
+                const bgClass = { kmb:'bg-kmb', ctb:'bg-ctb', nlb:'bg-nlb', gmb:'bg-gmb', lightRail:'bg-lightRail', lrtfeeder:'bg-lrtfeeder' };
                 const stopList = this.state.stopList || {};
                 const results = [];
 
@@ -2420,10 +2442,9 @@
 
                 try {
                     const routesData = await Promise.all(this.state.savedRoutes.map(async (route) => {
-                        if (!route.operators || !route.operators.length) {
-                            route.operators = [route.operator || 'kmb'];
-                        }
-                        let allETA = []; let op = Array.isArray(route.operators) ? route.operators[0] : (route.operators || route.operator);
+                        const storedOperators = Array.isArray(route.operators) ? route.operators : [route.operators || route.operator || 'kmb'];
+                        route.operators = storedOperators.map(operator => this.normalizeOperator(operator));
+                        let allETA = []; let op = route.operators[0];
                         if (route.operators.includes('kmb') && route.operators.includes('ctb')) {
                             const [kRes, cRes] = await Promise.all([
                                 this.fetchJSON(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${route.kmb_stop}/${route.route}/1`),
@@ -2449,7 +2470,7 @@
                                 if(routeData && routeData.eta) allETA = routeData.eta.filter(e=>e.timestamp).map(b => ({ eta: b.timestamp }));
                             }
                         } else if (op === 'lightRail') {
-                            const stationId = String(route.lightRail_stop || route.lightRail_stopId || route.stopId || '').replace(/^LR/i, '');
+                            const stationId = String(route.lightRail_stop || route.lightRail_stopId || route.lrt_stop || route.lightrail_stop || route.stopId || route.stop || '').replace(/^LR/i, '');
                             const res = await this.fetchJSON(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stationId}&with_special=1`);
                             const destination = route.lightRail_dest || route.destinations || '';
                             (res?.platform_list || []).forEach(platform => (platform.route_list || [])
@@ -2463,7 +2484,8 @@
                             const res = await this.fetchJSON('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
                                 method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language: 'zh', routeName: String(route.route) })
                             });
-                            const station = (res?.busStop || []).find(item => item.busStopId === (route.lrtfeeder_stop || route.lrtfeeder_stopId || route.stopId));
+                            const stationId = route.lrtfeeder_stop || route.lrtfeeder_stopId || route.irtfeeder_stop || route.mtrfeeder_stop || route.mtrbus_stop || route.stopId || route.stop;
+                            const station = (res?.busStop || []).find(item => item.busStopId === stationId);
                             (station?.bus || []).forEach(bus => {
                                 const rawSeconds = String(bus.arrivalTimeInSecond) === '108000' ? bus.departureTimeInSecond : bus.arrivalTimeInSecond;
                                 const seconds = Number(rawSeconds || 0);
@@ -2698,10 +2720,10 @@
                     await this.loadMapResources();
                     loading.innerText = '正在繪製全線車站與路線... ⏳';
                     
-                    let stops = []; let operator = Array.isArray(routeObj.operators) ? routeObj.operators[0] : (routeObj.operators || routeObj.operator); 
+                    let stops = []; let operator = this.normalizeOperator(Array.isArray(routeObj.operators) ? routeObj.operators[0] : (routeObj.operators || routeObj.operator)); 
                     let targetStopId = null;
-                    if (routeObj.kmb_stop || routeObj.ctb_stop || routeObj.nlb_stopId || routeObj.gmb_stopId) {
-                        targetStopId = operator === 'kmb' ? routeObj.kmb_stop : (operator === 'ctb' ? routeObj.ctb_stop : (operator === 'nlb' ? routeObj.nlb_stopId : routeObj.gmb_stopId));
+                    if (routeObj.kmb_stop || routeObj.ctb_stop || routeObj.nlb_stopId || routeObj.gmb_stopId || routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lrtfeeder_stop || routeObj.irtfeeder_stop || routeObj.mtrfeeder_stop) {
+                        targetStopId = operator === 'kmb' ? routeObj.kmb_stop : (operator === 'ctb' ? routeObj.ctb_stop : (operator === 'nlb' ? routeObj.nlb_stopId : (operator === 'lightRail' ? (routeObj.lightRail_stop || routeObj.lrt_stop || routeObj.lightrail_stop) : (operator === 'lrtfeeder' ? (routeObj.lrtfeeder_stop || routeObj.irtfeeder_stop || routeObj.mtrfeeder_stop || routeObj.mtrbus_stop) : routeObj.gmb_stopId))));
                     }
                     
                     let dirCode = routeObj.dir || routeObj.kmb_dir || routeObj.ctb_dir || routeObj.bound;

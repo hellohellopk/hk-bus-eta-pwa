@@ -933,6 +933,26 @@
             #view-favourites, #view-routes, #view-planner { max-width: 620px; }
             #view-favourites .footer-actions { max-width: 620px; }
         }
+
+        /* User-requested compact ETA rows: half-height cards with no NEXT label. */
+        .station-group-list .route-card {
+            min-height: 42px !important;
+            padding: 5px 10px 5px 7px !important;
+        }
+        .station-group-list .bus-left { gap: 8px !important; }
+        .station-group-list .route-badge { min-width: 40px !important; height: 24px !important; padding: 0 5px; font-size: 12px !important; }
+        .station-group-list .destination { font-size: 14px !important; line-height: 1.15; }
+        .station-group-list .eta-list { min-width: 48px !important; gap: 0 !important; }
+        .station-group-list .eta-list::before { display: none !important; }
+        .station-group-list .eta-primary { line-height: 1 !important; }
+        .station-group-list .eta-primary strong { font-size: 22px !important; }
+        .station-group-list .eta-secondary { display: none; }
+        @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
+        @media (max-width: 520px) {
+            .station-group-list .route-card { min-height: 40px !important; padding: 5px 8px 5px 6px !important; }
+            .station-group-list .route-badge { min-width: 36px !important; height: 23px !important; font-size: 11px !important; }
+            .station-group-list .destination { font-size: 13px !important; }
+        }
     </style>
 </head>
 <body>

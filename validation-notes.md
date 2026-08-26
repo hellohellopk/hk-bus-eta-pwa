@@ -54,6 +54,8 @@
 
 目前 HTML 只為九巴、城巴、嶼巴和專線小巴建立 ETA 分支，確認未處理 `lightRail` 與 `lrtfeeder`。上游 `hk-bus-eta` 原始碼使用 `GET /v1/transport/mtr/lrt/getSchedule?station_id=…&with_special=1` 取得輕鐵資料，並以 `POST /v1/transport/mtr/bus/getSchedule`（`{ language, routeName }`）取得港鐵巴士資料。現有資料庫亦確實使用 `lightRail`、`lrtfeeder` 營辦商代碼，且輕鐵站點 ID 為 `LR…` 格式。
 
+外部依據：上游輕鐵實作為 <https://github.com/hkbus/hk-bus-eta/blob/master/src/lightRail.ts>；港鐵巴士實作為 <https://github.com/hkbus/hk-bus-eta/blob/master/src/lrtfeeder.ts>；官方輕鐵服務端點為 <https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule>；官方港鐵巴士服務端點為 <https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule>。
+
 已用真實輕鐵資料驗證：路線 505、三聖站 `LR920` 成功顯示 ETA（測試時為「就到」及 13 分鐘）。收藏區的可見「更新 ETA」按鈕亦已出現，更新後會顯示短暫完成時間。
 
 已用真實港鐵巴士資料驗證：路線 506、兆麟站 `506-D010` 成功經官方 POST 資料服務顯示兩個 ETA（測試時為 10 與 22 分鐘）。輕鐵與港鐵巴士的收藏 ETA 分支均已成功回傳資料。
@@ -61,3 +63,15 @@
 手動「更新 ETA」按鈕已於港鐵巴士測試中完成驗證：點擊後文字改為「更新中…」、按鈕暫時禁用並顯示「正在取得最新 ETA」；完成後恢復可用，ETA 由 10／22 分鐘更新為 9／21 分鐘。
 
 本機搜尋驗證：查詢路線 `505` 時，結果已正確列出輕鐵 505 往兆康及往三聖的路線，並以「輕鐵」標識營辦商。因此修正同時支援由搜尋結果選擇車站、儲存收藏及後續 ETA 查詢。
+
+## 輕鐵及港鐵巴士地圖問題調查
+
+已確認路線資料庫本身包含所需座標：輕鐵三聖站 `LR920` 為 `22.3829, 113.97686`，港鐵巴士兆麟站 `506-D010` 為 `22.38551, 113.9767`。因此地圖未顯示的原因是 `openMapModal` 僅建立九巴、城巴、嶼巴及專線小巴的站點清單，未為 `lightRail` 和 `lrtfeeder` 從本機 `routeList`／`stopList` 建立地圖站點。
+
+輕鐵地圖驗證以路線 505、三聖站 `LR920` 進行；地圖開啟前收藏卡已成功顯示 ETA（測試時為 11 分鐘）。
+
+輕鐵 505 地圖已成功開啟並載入 16 個沿途站點（由三聖至兆康），包括站點清單、地圖標記與路線折線。其後已切換為港鐵巴士 506、兆麟站 `506-D010` 的測試收藏，準備核對第二類服務的地圖呈現。
+
+港鐵巴士 506 地圖亦已成功開啟並載入 14 個沿途站點（由兆麟至屯門碼頭），包括 Google 街道圖圖磚、地圖標記、路線折線及站點清單；收藏卡同時維持兩個 ETA（測試時為 7 與 17 分鐘）。
+
+車站群組卡片已套用四邊 12px 圓角；瀏覽器計算後的 `border-radius` 驗證值為 `12px`。

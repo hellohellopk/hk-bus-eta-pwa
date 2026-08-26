@@ -918,7 +918,7 @@
 
         /* Station groups: one station header, many route ETA rows. */
         #bus-container { overflow: visible; background: transparent; border-bottom: 0; }
-        .station-group { margin: 0 0 14px; border: 1px solid var(--eta-line); background: rgba(255,253,250,.88); box-shadow: 0 3px 0 rgba(11,30,50,.035); }
+        .station-group { margin: 0 0 14px; overflow:hidden; border: 1px solid var(--eta-line); border-radius: 12px; background: rgba(255,253,250,.88); box-shadow: 0 3px 0 rgba(11,30,50,.035); }
         .station-group-header { display: flex; align-items: center; min-height: 46px; padding: 8px 12px; gap: 10px; color: var(--eta-ink); border-bottom: 2px solid var(--eta-ink); background: linear-gradient(90deg, var(--eta-yellow) 0 8px, rgba(255,253,250,.98) 8px); }
         .station-group-kicker { color: var(--eta-ink-soft); font-family: var(--font-data); font-size: 9px; font-weight: 800; letter-spacing: .10em; }
         .station-group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); font-size: 15px; font-weight: 800; letter-spacing: -.025em; }
@@ -1339,6 +1339,30 @@
                         return coords;
                     }
                 } catch(e) {} return null;
+            },
+
+            getDatabaseRouteStops(routeObj, operator) {
+                const routeList = this.state.routeList || {};
+                const desiredDestination = routeObj.destinations || routeObj.dest || '';
+                let routeEntry = routeObj.routeKey ? routeList[routeObj.routeKey] : null;
+                if (!routeEntry || !routeEntry.co?.includes(operator)) {
+                    routeEntry = Object.values(routeList).find(entry =>
+                        entry.route === routeObj.route && entry.co?.includes(operator) &&
+                        (!desiredDestination || entry.dest?.zh === desiredDestination || entry.dest?.en === desiredDestination)
+                    ) || Object.values(routeList).find(entry => entry.route === routeObj.route && entry.co?.includes(operator));
+                }
+                const targetStopId = operator === 'lightRail' ? routeObj.lightRail_stop : routeObj.lrtfeeder_stop;
+                const stopIds = routeEntry?.stops?.[operator] || (targetStopId ? [targetStopId] : []);
+                return stopIds.map((id, index) => {
+                    const stop = this.state.stopList?.[id] || {};
+                    return {
+                        id,
+                        name: stop.name?.zh || stop.name?.en || '未知車站',
+                        lat: stop.location?.lat ?? stop.lat ?? null,
+                        lng: stop.location?.lng ?? stop.lng ?? null,
+                        seq: index + 1,
+                    };
+                });
             },
 
             // =======================================================================
@@ -2722,6 +2746,8 @@
                                  }))));
                             }
                         }
+                    } else if (operator === 'lightRail' || operator === 'lrtfeeder') {
+                        stops = this.getDatabaseRouteStops(routeObj, operator);
                     }
 
                     this.state.currentMapStops = stops;

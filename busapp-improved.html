@@ -950,6 +950,17 @@
         .station-group-list .eta-arriving-pulse { display:inline-block; color:var(--eta-danger); font-family:var(--font-ui); font-size:16px; font-weight:900; line-height:1; animation:eta-arrival-flash 1s steps(2,end) infinite; }
         @keyframes eta-arrival-flash { 0%, 44% { opacity:1; } 45%, 100% { opacity:.28; } }
         @media (prefers-reduced-motion: reduce) { .station-group-list .eta-arriving-pulse { animation:none; } }
+        .refresh-eta-btn { display:inline-flex; align-items:center; gap:6px; color:var(--eta-ink)!important; border-color:var(--eta-ink)!important; background:var(--eta-yellow)!important; }
+        .refresh-eta-btn.is-refreshing svg { animation:eta-refresh-spin .75s linear infinite; }
+        .refresh-eta-btn:disabled { opacity:.6; cursor:wait; }
+        .refresh-eta-status { display:none; align-self:center; color:var(--eta-muted); font-family:var(--font-data); font-size:10px; font-weight:700; }
+        .refresh-eta-status.visible { display:inline; }
+        @keyframes eta-refresh-spin { to { transform:rotate(360deg); } }
+        .route-card.op-lightRail { border-left-color:#008c45!important; }
+        .route-card.op-lrtfeeder { border-left-color:#1674c4!important; }
+        .route-badge.bg-lightRail { color:#fff; background:#008c45; }
+        .route-badge.bg-lrtfeeder { color:#fff; background:#1674c4; }
+        @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {
             .station-group-list .route-card { min-height: 40px !important; padding: 3px 8px 3px 6px !important; }
@@ -1000,6 +1011,8 @@
         <div id="bus-container"><div class="status-message">載入中...</div></div>
         <div class="footer-actions">
             <button class="footer-btn" id="install-btn" style="display:none;" onclick="app.installPWA()">📱 安裝至桌面</button>
+            <button class="footer-btn refresh-eta-btn" id="refresh-eta-btn" onclick="app.manualRefresh()"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-2.64-6.36"/><polyline points="21 3 21 9 15 9"/></svg><span>更新 ETA</span></button>
+            <span class="refresh-eta-status" id="refresh-eta-status" aria-live="polite"></span>
             <button class="footer-btn" onclick="app.exportData()">匯出備份</button>
             <button class="footer-btn" onclick="document.getElementById('import-file').click()">匯入資料</button>
             <input type="file" id="import-file" style="display:none" accept=".json" onchange="app.importData(event)">
@@ -1730,6 +1743,8 @@
                 if (op === 'ctb') return '#ff9500';
                 if (op === 'nlb') return '#007aff';
                 if (op === 'gmb') return '#34c759';
+                if (op === 'lightrail') return '#008c45';
+                if (op === 'lrtfeeder') return '#1674c4';
                 return '#3a3a3c';
             },
 
@@ -1943,13 +1958,13 @@
                 if (this.state.isDataReady && this.state.routeList) {
                     const keywords = inputVal.split(/\s+/);
                     const isMatch = (...args) => { const s = args.join(' ').toUpperCase(); return keywords.every(kw => s.includes(kw)); };
-                    const CO_NAME  = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', mtr:'港鐵巴士', lrt:'輕鐵' };
-                    const CO_ORDER = ['kmb','ctb','nlb','gmb'];
+                    const CO_NAME  = { kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lrtfeeder:'港鐵巴士', lightRail:'輕鐵', mtr:'港鐵', lrt:'輕鐵' };
+                    const CO_ORDER = ['kmb','ctb','nlb','gmb','lrtfeeder','lightRail'];
                     let results = [];
                     Object.entries(this.state.routeList).forEach(([routeKey, r]) => {
                         if (!r || !r.co || !r.co.length) return;
                         if (r.co.includes('kmb') && r.serviceType && r.serviceType !== '1') return;
-                        if (r.co.every(c => ['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(c))) return; // 排除港鐵/輕鐵/渡輪
+                        if (r.co.every(c => ['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(c))) return; // 排除港鐵及渡輪；保留 lightRail/lrtfeeder
                         const origZh = r.orig?.zh || '', destZh = r.dest?.zh || '', routeNo = r.route || '';
                         let matched = isMatch(routeNo, origZh, destZh);
                         if (!matched && this.state.stopList && (keywords.join('').match(/[一-鿿]/g)||[]).length >= 2) {
@@ -1957,7 +1972,7 @@
                         }
                         if (!matched) return;
                         r.co.forEach(co => {
-                            if (['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(co)) return; // 排除港鐵/輕鐵/渡輪
+                            if (['mtr','lrt','sunferry','fortuneferry','hkkf','nwff'].includes(co)) return; // 排除港鐵及渡輪；保留 lightRail/lrtfeeder
                             // routeFareList: 每個方向係獨立 entry，bound 已係正確方向
                             const bnd = r.bound?.[co] || 'O';
                             const d = (bnd === 'I') ? 'I' : 'O';
@@ -2330,21 +2345,23 @@
                 let dirCode = routeContext.dir || routeContext.kmb_dir || routeContext.ctb_dir || routeContext.bound;
                 let dir = (dirCode === 'I' || dirCode === 'inbound') ? 'I' : 'O';
 
-                const newRoute = { stopName: stop.name, route: routeContext.route, operators: [op], destinations: routeContext.dest || routeContext.destinations, origins: routeContext.orig || routeContext.origins || '' };
+                const newRoute = { stopName: stop.name, route: routeContext.route, routeKey: routeContext.routeKey, operators: [op], destinations: routeContext.dest || routeContext.destinations, origins: routeContext.orig || routeContext.origins || '' };
                 if (op === 'kmb') { newRoute.kmb_stop = stop.id || stop.stopId; newRoute.kmb_dir = dir; }
                 else if (op === 'ctb') { newRoute.ctb_stop = stop.id || stop.stopId; newRoute.ctb_dir = dir; }
                 else if (op === 'nlb') { newRoute.nlb_stopId = stop.id || stop.stopId; newRoute.nlb_routeId = routeContext.nlb_routeId || routeContext.nlbId; }
                 else if (op === 'gmb') { newRoute.gmb_routeId = routeContext.gmb_routeId; newRoute.gmb_routeSeq = routeContext.gmb_routeSeq; newRoute.gmb_stopId = stop.id || stop.stopId; newRoute.gmb_stopSeq = stop.seq; }
+                else if (op === 'lightRail') { newRoute.lightRail_stop = stop.id || stop.stopId; newRoute.lightRail_dest = routeContext.dest || routeContext.destinations || ''; }
+                else if (op === 'lrtfeeder') { newRoute.lrtfeeder_stop = stop.id || stop.stopId; }
                 return newRoute;
             },
 
             isRouteSaved(routeContext, stop) {
                 const target = this.generateSaveObj(routeContext, stop);
-                return this.state.savedRoutes.some(r => r.route === target.route && r.stopName === target.stopName && (r.kmb_dir === target.kmb_dir || r.ctb_dir === target.ctb_dir || r.nlb_routeId === target.nlb_routeId || r.gmb_routeId === target.gmb_routeId));
+                return this.state.savedRoutes.some(r => r.route === target.route && r.stopName === target.stopName && (r.kmb_dir === target.kmb_dir || r.ctb_dir === target.ctb_dir || r.nlb_routeId === target.nlb_routeId || r.gmb_routeId === target.gmb_routeId || r.lightRail_stop === target.lightRail_stop || r.lrtfeeder_stop === target.lrtfeeder_stop));
             },
 
             toggleStarBtn(newRoute, btn) {
-                const existingIndex = this.state.savedRoutes.findIndex(r => r.route === newRoute.route && r.stopName === newRoute.stopName && (r.kmb_dir === newRoute.kmb_dir || r.ctb_dir === newRoute.ctb_dir || r.nlb_routeId === newRoute.nlb_routeId || r.gmb_routeId === newRoute.gmb_routeId));
+                const existingIndex = this.state.savedRoutes.findIndex(r => r.route === newRoute.route && r.stopName === newRoute.stopName && (r.kmb_dir === newRoute.kmb_dir || r.ctb_dir === newRoute.ctb_dir || r.nlb_routeId === newRoute.nlb_routeId || r.gmb_routeId === newRoute.gmb_routeId || r.lightRail_stop === newRoute.lightRail_stop || r.lrtfeeder_stop === newRoute.lrtfeeder_stop));
                 if (existingIndex > -1) {
                     this.state.savedRoutes.splice(existingIndex, 1);
                     btn.style.color = '#e5e5ea';
@@ -2407,6 +2424,27 @@
                                 let routeData = res.data.find(d => String(d.route_seq) === String(route.gmb_routeSeq));
                                 if(routeData && routeData.eta) allETA = routeData.eta.filter(e=>e.timestamp).map(b => ({ eta: b.timestamp }));
                             }
+                        } else if (op === 'lightRail') {
+                            const stationId = String(route.lightRail_stop || route.lightRail_stopId || route.stopId || '').replace(/^LR/i, '');
+                            const res = await this.fetchJSON(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stationId}&with_special=1`);
+                            const destination = route.lightRail_dest || route.destinations || '';
+                            (res?.platform_list || []).forEach(platform => (platform.route_list || [])
+                                .filter(item => (String(item.route_no) === String(route.route) || String(item.additionalInfo1) === String(route.route)) && (!destination || item.dest_ch === destination || String(item.dest_en || '').includes('Circular')) && Number(item.stop) === 0)
+                                .forEach(item => {
+                                    const minutes = Number.parseInt(item.time_en, 10);
+                                    const seconds = Number.isFinite(minutes) ? minutes * 60 : 0;
+                                    allETA.push({ eta: new Date(Date.now() + seconds * 1000).toISOString() });
+                                }));
+                        } else if (op === 'lrtfeeder') {
+                            const res = await this.fetchJSON('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', {
+                                method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language: 'zh', routeName: String(route.route) })
+                            });
+                            const station = (res?.busStop || []).find(item => item.busStopId === (route.lrtfeeder_stop || route.lrtfeeder_stopId || route.stopId));
+                            (station?.bus || []).forEach(bus => {
+                                const rawSeconds = String(bus.arrivalTimeInSecond) === '108000' ? bus.departureTimeInSecond : bus.arrivalTimeInSecond;
+                                const seconds = Number(rawSeconds || 0);
+                                if (Number.isFinite(seconds)) allETA.push({ eta: new Date(Date.now() + seconds * 1000).toISOString() });
+                            });
                         }
                         allETA.sort((a,b) => new Date(a.eta.replace(' ','T')) - new Date(b.eta.replace(' ','T')));
                         return { route, etas: this.formatETAs(allETA) };
@@ -2424,6 +2462,8 @@
                         else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'ctb') { badgeClass = 'bg-ctb'; opClass = 'arriving-ctb'; opTint = 'op-ctb'; } 
                         else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'nlb') { badgeClass = 'bg-nlb'; opClass = 'arriving-nlb'; opTint = 'op-nlb'; } 
                         else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'gmb') { badgeClass = 'bg-gmb'; opClass = 'arriving-gmb'; opTint = 'op-gmb'; }
+                        else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'lightRail') { badgeClass = 'bg-lightRail'; opTint = 'op-lightRail'; }
+                        else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'lrtfeeder') { badgeClass = 'bg-lrtfeeder'; opTint = 'op-lrtfeeder'; }
                         cardDiv.classList.add(opTint);
 
                         let etaHtml = item.etas.length === 0 ? `<div class="eta-row no-data">暫無班次</div>` : item.etas.slice(0, 2).map((eta, i) => {
@@ -2448,7 +2488,7 @@
                             if (!fEntry) fEntry = Object.values(this.state.routeList).find(r => r.route === rObj.route);
                             if (fEntry?.fares?.length) {
                                 // Get fare for this stop: find stop index from stops array
-                                const stopId = rObj.kmb_stop || rObj.ctb_stop || rObj.nlb_stopId || rObj.gmb_stopId;
+                                const stopId = rObj.kmb_stop || rObj.ctb_stop || rObj.nlb_stopId || rObj.gmb_stopId || rObj.lightRail_stop || rObj.lrtfeeder_stop;
                                 const stops = fEntry.stops?.[op] || Object.values(fEntry.stops||{})[0] || [];
                                 const stopIdx = stops.indexOf(stopId);
                                 const fareVal = stopIdx >= 0 ? fEntry.fares[stopIdx] : fEntry.fares[fEntry.fares.length - 1];
@@ -2497,7 +2537,14 @@
                 if (this.state.isLoading || this.state.currentTab !== 'favourites' || this.state.isEditMode) return;
                 this.state.isLoading = true;
                 this._loadingStart = Date.now();
-                document.getElementById('refresh-btn').disabled = true;
+                const headerButton = document.getElementById('refresh-btn');
+                const manualButton = document.getElementById('refresh-eta-btn');
+                const manualLabel = manualButton?.querySelector('span');
+                const status = document.getElementById('refresh-eta-status');
+                if (headerButton) headerButton.disabled = true;
+                if (manualButton) { manualButton.disabled = true; manualButton.classList.add('is-refreshing'); }
+                if (manualLabel) manualLabel.textContent = '更新中…';
+                if (status) { status.textContent = '正在取得最新 ETA'; status.classList.add('visible'); }
                 try {
                     await this.renderBuses();
                 } catch(e) {
@@ -2505,7 +2552,13 @@
                 } finally {
                     this.state.isLoading = false;
                     this._loadingStart = null;
-                    document.getElementById('refresh-btn').disabled = false;
+                    if (headerButton) headerButton.disabled = false;
+                    if (manualButton) { manualButton.disabled = false; manualButton.classList.remove('is-refreshing'); }
+                    if (manualLabel) manualLabel.textContent = '更新 ETA';
+                    if (status) {
+                        status.textContent = `已更新 ${new Date().toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' })}`;
+                        setTimeout(() => status.classList.remove('visible'), 2600);
+                    }
                 }
             },
 

@@ -1135,11 +1135,23 @@
         #map-modal .map-style-select { min-height:34px; }
         @media (max-width:520px) { #map-modal .map-header { min-height:44px!important; padding:6px 9px!important; } }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
-        @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
+        /* 最終尺寸覆寫：防止舊的緊湊模式縮回路線牌。 */
+        @media (min-width: 900px) {
+            .station-group-list .route-card { min-height:92px!important; padding:12px 15px 12px 11px!important; }
+            .station-group-list .route-badge { min-width:116px!important; height:64px!important; padding:0 13px!important; font-size:34px!important; }
+            .station-group-list .destination { font-size:25px!important; }
+            .station-group-list .fare-watermark { font-size:26px!important; }
+            .station-group-list .eta-primary strong { font-size:30px!important; }
+        }
         @media (max-width: 520px) {
-            .station-group-list .route-card { min-height: 40px !important; padding: 3px 8px 3px 6px !important; }
-            .station-group-list .route-badge { min-width: 36px !important; height: 23px !important; font-size: 11px !important; }
-            .station-group-list .destination { font-size: 13px !important; }
+            .station-group-list .route-card { min-height:76px!important; padding:10px 11px 10px 9px!important; }
+            .station-group-list .bus-left { gap:11px!important; }
+            .station-group-list .route-badge { min-width:86px!important; height:50px!important; padding:0 9px!important; font-size:26px!important; border-radius:8px!important; }
+            .station-group-list .destination { font-size:19px!important; }
+            .station-group-list .fare-watermark { font-size:20px!important; }
+            .station-group-list .eta-list { min-width:52px!important; }
+            .station-group-list .eta-primary strong { font-size:24px!important; }
+            .station-group-list .eta-secondary strong { font-size:16px!important; }
         }
     </style>
 </head>

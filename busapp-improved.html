@@ -974,6 +974,11 @@
         .route-badge.bg-nlb { color:#fff; background:#0072c6; }
         .route-badge.bg-lightRail { color:#1b2b34; border:1px solid #1b2b34; background:#fff; box-shadow:none!important; }
         .route-badge.bg-lrtfeeder { color:#fff; background:#f57c00; }
+        /* 深色功能列：香港實時時間採等寬數字，避免每秒更新造成版面跳動。 */
+        .header-live-time { display:flex; align-items:baseline; gap:4px; color:rgba(255,255,255,.94); font-family:var(--font-data); font-variant-numeric:tabular-nums; letter-spacing:.03em; white-space:nowrap; padding:0 5px; }
+        .header-live-time .time-label { color:rgba(255,255,255,.56); font-family:var(--font-ui); font-size:9px; font-weight:800; letter-spacing:.1em; }
+        .header-live-time time { font-size:12px; font-weight:800; }
+        @media (max-width: 520px) { .header-live-time { gap:0; padding:0 2px; } .header-live-time .time-label { display:none; } .header-live-time time { font-size:11px; } }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {
@@ -1011,6 +1016,7 @@
         </div>
         <!-- Icons right -->
         <div class="header-actions" style="display:flex;align-items:center;gap:4px;margin-left:0;">
+            <div class="header-live-time" aria-label="香港實時時間"><span class="time-label">HK</span><time id="header-live-time" datetime="">--:--:--</time></div>
             <button class="icon-btn mac-icon-btn" id="refresh-btn" onclick="app.manualRefresh()" title="更新">
                 <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.92-10.44l5.58 5.58"/></svg>
             </button>
@@ -1254,6 +1260,20 @@
                     e.preventDefault(); this.state.deferredPrompt = e;
                     document.getElementById('install-btn').style.display = 'flex';
                 });
+            },
+            updateHeaderClock() {
+                const clock = document.getElementById('header-live-time');
+                if (!clock) return;
+                const now = new Date();
+                const parts = new Intl.DateTimeFormat('en-GB', { timeZone: 'Asia/Hong_Kong', hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false }).formatToParts(now);
+                const value = type => parts.find(part => part.type === type)?.value || '00';
+                clock.textContent = `${value('hour')}:${value('minute')}:${value('second')}`;
+                clock.dateTime = now.toISOString();
+            },
+            startHeaderClock() {
+                if (this._headerClockTimer) clearInterval(this._headerClockTimer);
+                this.updateHeaderClock();
+                this._headerClockTimer = setInterval(() => this.updateHeaderClock(), 1000);
             },
             installPWA() {
                 if (this.state.deferredPrompt) {
@@ -3103,6 +3123,7 @@
         };
 
         window.addEventListener('load', async () => {
+            app.startHeaderClock();
             app.initPWA();
             app.loadData();
             // 確保 isLoading 永遠不會卡死

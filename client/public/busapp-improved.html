@@ -1109,6 +1109,31 @@
             .station-group-list .eta-primary strong { font-size:21px!important; }
             .station-group-list .eta-secondary strong { font-size:14px!important; }
         }
+        /* 使用者參考圖：左側紅色路線牌為每列首要視覺錨點。 */
+        .station-group-list .route-card { min-height:76px!important; padding:10px 13px 10px 9px!important; }
+        .station-group-list .bus-left { gap:14px!important; }
+        .station-group-list .route-badge { min-width:98px!important; height:54px!important; padding:0 11px!important; border-radius:8px!important; font-size:28px!important; font-weight:900!important; line-height:1!important; }
+        .station-group-list .destination { font-size:22px!important; }
+        .station-group-list .fare-watermark { font-size:23px!important; }
+        .station-group-list .eta-list { min-width:62px!important; }
+        .station-group-list .eta-primary strong { font-size:27px!important; }
+        .station-group-list .eta-secondary strong { font-size:17px!important; }
+        @media (max-width:520px) {
+            .station-group-list .route-card { min-height:66px!important; padding:8px 10px 8px 8px!important; }
+            .station-group-list .bus-left { gap:10px!important; }
+            .station-group-list .route-badge { min-width:76px!important; height:44px!important; padding:0 8px!important; border-radius:7px!important; font-size:22px!important; }
+            .station-group-list .destination { font-size:18px!important; }
+            .station-group-list .fare-watermark { font-size:19px!important; }
+            .station-group-list .eta-list { min-width:50px!important; }
+            .station-group-list .eta-primary strong { font-size:23px!important; }
+            .station-group-list .eta-secondary strong { font-size:15px!important; }
+        }
+        /* 使用者要求：地圖頁不顯示 LIVE ROUTE 或路線名稱，只留下必要控制。 */
+        #map-modal .map-header { min-height:48px!important; justify-content:flex-end!important; padding:8px 12px!important; }
+        #map-modal .map-header::before, #map-modal #map-title { display:none!important; content:none!important; }
+        #map-modal .map-header-left { flex:0 1 auto!important; justify-content:flex-end!important; }
+        #map-modal .map-style-select { min-height:34px; }
+        @media (max-width:520px) { #map-modal .map-header { min-height:44px!important; padding:6px 9px!important; } }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {

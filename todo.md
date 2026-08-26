@@ -91,3 +91,6 @@
 - [x] 加入 PWA manifest、圖示與 service worker 離線快取。
 - [x] 建立 GitHub Pages 建置與發布工作流程。
 - [x] 建置、發布並驗證公開網址及 PWA 安裝條件。
+- [ ] 重現 GitHub Pages 公開版「載入地圖失敗」並記錄網絡與主控台錯誤。
+- [ ] 修正地圖腳本、圖磚或資源在 GitHub Pages 下的載入相容性。
+- [ ] 重新發布並驗證手機版可正常開啟地圖。

@@ -1382,20 +1382,45 @@
             async loadMapResources() {
                 if (this.state.isMapLoaded || window.L) return Promise.resolve();
                 if (this.state.isMapLoading) {
-                    return new Promise((resolve) => {
+                    return new Promise((resolve, reject) => {
                         const checkInterval = setInterval(() => {
                             if (this.state.isMapLoaded || window.L) { clearInterval(checkInterval); resolve(); }
+                            else if (!this.state.isMapLoading) { clearInterval(checkInterval); reject(new Error('地圖資源載入未完成')); }
                         }, 100);
                     });
                 }
                 this.state.isMapLoading = true;
-                return new Promise((resolve, reject) => {
-                    const link = document.createElement('link'); link.rel = 'stylesheet'; link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'; document.head.appendChild(link);
-                    const script = document.createElement('script'); script.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-                    script.onload = () => { this.state.isMapLoaded = true; this.state.isMapLoading = false; resolve(); };
-                    script.onerror = () => { this.state.isMapLoading = false; reject(new Error("無法載入地圖資源")); };
+                const providers = [
+                    { js: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js', css: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.css' },
+                    { js: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.js', css: 'https://cdn.jsdelivr.net/npm/leaflet@1.9.4/dist/leaflet.css' },
+                    { js: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js', css: 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css' }
+                ];
+                const loadScript = (src) => new Promise((resolve, reject) => {
+                    const script = document.createElement('script');
+                    const timeout = setTimeout(() => { script.remove(); reject(new Error(`逾時：${src}`)); }, 10000);
+                    script.src = src; script.async = true;
+                    script.onload = () => { clearTimeout(timeout); resolve(); };
+                    script.onerror = () => { clearTimeout(timeout); script.remove(); reject(new Error(`無法載入：${src}`)); };
                     document.head.appendChild(script);
                 });
+                let lastError;
+                for (const provider of providers) {
+                    try {
+                        await loadScript(provider.js);
+                        if (!window.L) throw new Error(`Leaflet 未初始化：${provider.js}`);
+                        const link = document.createElement('link');
+                        link.rel = 'stylesheet'; link.href = provider.css;
+                        document.head.appendChild(link);
+                        this.state.isMapLoaded = true;
+                        this.state.isMapLoading = false;
+                        return;
+                    } catch (error) {
+                        lastError = error;
+                        console.warn('[map] Leaflet CDN unavailable, trying backup', error);
+                    }
+                }
+                this.state.isMapLoading = false;
+                throw lastError || new Error('無法載入地圖資源');
             },
 
             // --- PWA ---
@@ -3223,7 +3248,15 @@
 
                     this.loadAllETAsForList(stops, routeObj, 'map-eta-');
 
-                } catch(e) { loading.innerHTML = '載入地圖失敗，請檢查網路連線。'; }
+                } catch(e) {
+                    console.error('[map] Failed to open route map', e);
+                    this.state.isMapLoading = false;
+                    loading.innerHTML = '<div>暫時無法載入地圖。</div><button type="button" class="btn" style="margin-top:12px" onclick="app.retryMapLoad()">重新嘗試</button>';
+                }
+            },
+
+            async retryMapLoad() {
+                if (this.state.currentMapRouteContext) await this.openMapModal(this.state.currentMapRouteContext);
             },
 
             closeMapModal() { 

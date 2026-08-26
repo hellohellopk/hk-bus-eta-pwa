@@ -1413,6 +1413,23 @@
                 if (operator === 'lrtfeeder' && stopId) route.lrtfeeder_stop = stopId;
                 return route;
             },
+            async resolveNlbRouteId(route) {
+                const existingId = route.nlb_routeId || route.nlbId;
+                if (existingId) {
+                    route.nlb_routeId = String(existingId);
+                    return route.nlb_routeId;
+                }
+                const normalise = value => String(value || '').replace(/[\s（）()]/g, '');
+                const desiredDestination = normalise(route.destinations || route.dest);
+                const desiredOrigin = normalise(route.origins || route.orig);
+                const candidates = (await this.getNLBRoutes() || []).filter(item => String(item.routeNo) === String(route.route));
+                const matched = candidates.find(item =>
+                    (!desiredDestination || normalise(item.dest_tc).includes(desiredDestination)) &&
+                    (!desiredOrigin || normalise(item.orig_tc).includes(desiredOrigin))
+                ) || candidates.find(item => !desiredDestination || normalise(item.dest_tc).includes(desiredDestination)) || candidates[0];
+                if (matched?.routeId) route.nlb_routeId = String(matched.routeId);
+                return route.nlb_routeId || null;
+            },
 
             // =======================================================================
             // 🌟 史詩級升級：背景同步全港小巴路線 + 「所有途經站」資料引擎
@@ -1769,18 +1786,23 @@
                         }));
                     }
                 } else if (operator === 'nlb') {
-                    const chunkArray = (arr, size) => Array.from({ length: Math.ceil(arr.length / size) }, (v, i) => arr.slice(i * size, i * size + size));
-                    for (let chunk of chunkArray(stops, 5)) {
-                        await Promise.all(chunk.map(async (s) => {
-                            try {
-                                const _nlbRid = routeObj.nlb_routeId || routeObj.nlbId;
-                                let res = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${_nlbRid}&stopId=${s.id}`);
-                                let etas = [];
-                                if(res && res.estimatedArrivals) { res.estimatedArrivals.forEach(b => { if (b.estimatedArrivalTime) etas.push(b.estimatedArrivalTime); }); }
-                                this.renderETAInContainer(etas, `${containerPrefix}${s.seq}`, opColorClass);
-                            } catch(e) { this.renderETAInContainer(null, `${containerPrefix}${s.seq}`); }
-                        }));
+                    const nlbRouteId = await this.resolveNlbRouteId(routeObj);
+                    if (!nlbRouteId) {
+                        stops.forEach(s => this.renderETAInContainer(null, `${containerPrefix}${s.seq}`, opColorClass));
+                        return;
                     }
+                    await Promise.all(stops.map(async (s) => {
+                        try {
+                            const request = () => this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${nlbRouteId}&stopId=${s.id}`);
+                            let res = await request();
+                            if (!res) {
+                                await new Promise(resolve => setTimeout(resolve, 280));
+                                res = await request();
+                            }
+                            const etas = (res?.estimatedArrivals || []).map(item => item.estimatedArrivalTime).filter(Boolean);
+                            this.renderETAInContainer(etas, `${containerPrefix}${s.seq}`, opColorClass);
+                        } catch(e) { this.renderETAInContainer(null, `${containerPrefix}${s.seq}`, opColorClass); }
+                    }));
                 } else if (operator === 'gmb') {
                     if (!routeObj.gmb_routeId) {
                         if (this.state.gmbAllRoutes?.length) {
@@ -2548,7 +2570,7 @@
                             let res = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${route.ctb_stop}/${route.route}`);
                             if(res && res.data) allETA = res.data.filter(b => b.dir === route.ctb_dir).map(b => ({ eta: b.eta }));
                         } else if (op === 'nlb') {
-                            const _favNlbRid = route.nlb_routeId || route.nlbId;
+                            const _favNlbRid = await this.resolveNlbRouteId(route);
                             let res = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${_favNlbRid}&stopId=${route.nlb_stopId}`);
                             if(res && res.estimatedArrivals) allETA = res.estimatedArrivals.filter(b=>b.estimatedArrivalTime).map(bus => ({ eta: bus.estimatedArrivalTime }));
                         } else if (op === 'gmb') {
@@ -2849,7 +2871,7 @@
                         const res = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/citybus/route-stop/CTB/${routeObj.route}/${(bound === 'I' || bound === 'inbound') ? 'inbound' : 'outbound'}`);
                         if(res && res.data) stops = (await Promise.all(res.data.map(async s => { const stopData = await this.getCTBStop(s.stop); return stopData ? { id: s.stop, name: stopData.name_tc, lat: stopData.lat, lng: stopData.long, seq: s.seq } : null; }))).filter(s => s !== null);
                     } else if (operator === 'nlb') {
-                        const _mNlbRid = routeObj.nlb_routeId || routeObj.nlbId;
+                        const _mNlbRid = await this.resolveNlbRouteId(routeObj);
                         const res = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=list&routeId=${_mNlbRid}`);
                         if(res && res.stops) stops = res.stops.map((s, idx) => ({ id: s.stopId, name: s.stopName_c, lat: s.latitude, lng: s.longitude, seq: s.stopSequence || (idx + 1) }));
                     } else if (operator === 'gmb') {
@@ -3034,7 +3056,7 @@
                             const data = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${stopId}/${route}`);
                             if(data && data.data) allETA = data.data.filter(bus => bus.dir === dir).map(bus => ({ eta: bus.eta }));
                         } else if (operator === 'nlb') {
-                            const _fNlbRid = routeObj.nlb_routeId || routeObj.nlbId;
+                            const _fNlbRid = await this.resolveNlbRouteId(routeObj);
                             const data = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${_fNlbRid}&stopId=${stopId}`);
                             if(data && data.estimatedArrivals) allETA = data.estimatedArrivals.filter(b=>b.estimatedArrivalTime).map(bus => ({ eta: bus.estimatedArrivalTime }));
                         } else if (operator === 'gmb') {

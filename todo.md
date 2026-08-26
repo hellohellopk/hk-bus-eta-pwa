@@ -28,3 +28,6 @@
 - [x] 檢查舊有 Light Rail 與 LRT Feeder 收藏格式的 ETA 相容性。
 - [x] 套用城巴黃、九巴紅、小巴綠、大嶼山藍、輕鐵白、港鐵巴士橙色彩規則。
 - [x] 使用真實輕鐵及港鐵巴士資料驗證 ETA 與色彩呈現。
+- [x] 對照 hk-independent-bus-eta 的 Light Rail 與 LRT Feeder ETA 資料轉換。
+- [x] 修正目前收藏格式與上游路線、站點鍵的相容性。
+- [x] 以真實收藏及搜尋流程驗證兩類服務 ETA。

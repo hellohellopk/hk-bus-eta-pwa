@@ -83,3 +83,9 @@
 以舊格式收藏測試輕鐵：營辦商別名 `lrt` 與站點欄位 `lrt_stop: LR920` 成功正規化為 Light Rail，並顯示官方 ETA（測試時為 4 及 16 分鐘）。路線徽章為白色，文字與細框使用深墨色以維持清晰對比。
 
 最新瀏覽器驗證確認輕鐵卡片具有 `op-lightRail` 類別，ETA 顯示 3 與 15 分鐘；其路線徽章背景為白色（`rgb(255,255,255)`），文字與邊框為深墨色。港鐵巴士舊格式驗證則確認 ETA 和橙色徽章均正常。
+
+## hk-independent-bus-eta 對照修正
+
+上游 `useEtas` 會把完整 `routeObj`、序號及 `stopList` 一併傳入正規化 ETA 函式。現已為舊收藏加入相同概念的補全步驟：以路線號、站名、營辦商及本機 `routeList`／`stopList` 自動取得正確的 route key、目的地與站點 ID。驗證中僅提供 `{ stopName: '三聖', route: '505', operators: ['lrt'] }` 的輕鐵舊收藏，成功補全並顯示 10 分鐘 ETA。
+
+同一補全流程亦用於港鐵巴士：僅提供 `{ stopName: '兆麟', route: '506', operators: ['irtfeeder'] }` 的舊收藏，即成功補全為 LRT Feeder 正確站點並顯示 4 與 14 分鐘 ETA。

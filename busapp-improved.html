@@ -1376,6 +1376,38 @@
                     };
                 });
             },
+            hydrateMtrFavourite(route, operator) {
+                operator = this.normalizeOperator(operator);
+                if (!['lightRail', 'lrtfeeder'].includes(operator) || !this.state.routeList || !this.state.stopList) return route;
+                const desiredDestination = route.destinations || route.dest || '';
+                let routeEntry = route.routeKey ? this.state.routeList[route.routeKey] : null;
+                if (!routeEntry || !routeEntry.co?.includes(operator)) {
+                    routeEntry = Object.entries(this.state.routeList).find(([, entry]) =>
+                        entry.route === route.route && entry.co?.includes(operator) &&
+                        (!desiredDestination || entry.dest?.zh === desiredDestination || entry.dest?.en === desiredDestination)
+                    )?.[1] || Object.entries(this.state.routeList).find(([, entry]) =>
+                        entry.route === route.route && entry.co?.includes(operator)
+                    )?.[1];
+                }
+                if (!routeEntry) return route;
+                const stopIds = routeEntry.stops?.[operator] || [];
+                const legacyStopId = operator === 'lightRail'
+                    ? (route.lightRail_stop || route.lightRail_stopId || route.lrt_stop || route.lightrail_stop || route.stopId || route.stop)
+                    : (route.lrtfeeder_stop || route.lrtfeeder_stopId || route.irtfeeder_stop || route.mtrfeeder_stop || route.mtrbus_stop || route.stopId || route.stop);
+                const stopId = stopIds.includes(legacyStopId)
+                    ? legacyStopId
+                    : stopIds.find(id => {
+                        const stop = this.state.stopList[id];
+                        return stop?.name?.zh === route.stopName || stop?.name?.en === route.stopName;
+                    }) || legacyStopId;
+                const routeKey = Object.entries(this.state.routeList).find(([, entry]) => entry === routeEntry)?.[0];
+                route.routeKey = route.routeKey || routeKey;
+                route.destinations = route.destinations || routeEntry.dest?.zh || routeEntry.dest?.en || '';
+                route.operators = [operator];
+                if (operator === 'lightRail' && stopId) route.lightRail_stop = stopId;
+                if (operator === 'lrtfeeder' && stopId) route.lrtfeeder_stop = stopId;
+                return route;
+            },
 
             // =======================================================================
             // 🌟 史詩級升級：背景同步全港小巴路線 + 「所有途經站」資料引擎
@@ -2445,6 +2477,8 @@
                         const storedOperators = Array.isArray(route.operators) ? route.operators : [route.operators || route.operator || 'kmb'];
                         route.operators = storedOperators.map(operator => this.normalizeOperator(operator));
                         let allETA = []; let op = route.operators[0];
+                        route = this.hydrateMtrFavourite(route, op);
+                        op = route.operators[0];
                         if (route.operators.includes('kmb') && route.operators.includes('ctb')) {
                             const [kRes, cRes] = await Promise.all([
                                 this.fetchJSON(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${route.kmb_stop}/${route.route}/1`),

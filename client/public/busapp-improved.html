@@ -979,6 +979,90 @@
         .header-live-time .time-label { color:rgba(255,255,255,.56); font-family:var(--font-ui); font-size:9px; font-weight:800; letter-spacing:.1em; }
         .header-live-time time { font-size:12px; font-weight:800; }
         @media (max-width: 520px) { .header-live-time { gap:0; padding:0 2px; } .header-live-time .time-label { display:none; } .header-live-time time { font-size:11px; } }
+        /* 資訊看板美化：深墨功能列、營辦商色條與緊湊的時刻表閱讀節奏。 */
+        .header {
+            background:linear-gradient(105deg, #0b1e32 0%, #112d47 62%, #173954 100%) !important;
+            border:1px solid rgba(255,255,255,.15) !important;
+            border-radius:12px 12px 8px 8px !important;
+            box-shadow:0 10px 22px rgba(11,30,50,.16), inset 0 1px 0 rgba(255,255,255,.08) !important;
+        }
+        .header .nav-item { color:rgba(255,255,255,.68) !important; font-family:var(--font-ui) !important; font-weight:800 !important; letter-spacing:.01em; transition:color .16s var(--ease-out), background .16s var(--ease-out), transform .16s var(--ease-out); }
+        .header .nav-item:hover { color:#fff !important; background:rgba(255,255,255,.10) !important; }
+        .header .nav-item.active { color:var(--eta-ink) !important; background:var(--eta-yellow) !important; box-shadow:0 2px 0 rgba(0,0,0,.18), inset 0 0 0 1px rgba(255,255,255,.34); }
+        .header .nav-item:active { transform:scale(.97); }
+        .header-live-time { min-height:26px; padding:0 7px; border:1px solid rgba(255,255,255,.17); border-radius:6px; background:rgba(0,0,0,.16); }
+        .header-actions .mac-icon-btn { background:rgba(255,255,255,.08) !important; color:#fff !important; border-color:rgba(255,255,255,.20) !important; transition:background .16s var(--ease-out), transform .16s var(--ease-out); }
+        .header-actions .mac-icon-btn:hover { background:rgba(255,255,255,.16) !important; }
+        .header-actions .mac-icon-btn:active { transform:scale(.95); }
+        .station-group { --group-color:var(--eta-yellow); margin-bottom:16px; border-color:rgba(11,30,50,.16); box-shadow:0 5px 0 rgba(11,30,50,.045), 0 11px 24px rgba(11,30,50,.055); }
+        .station-group-header { position:relative; min-height:52px; padding:9px 12px 9px 16px; gap:9px; border-bottom:1px solid rgba(11,30,50,.16); background:linear-gradient(100deg, color-mix(in srgb, var(--group-color) 14%, #fff) 0%, rgba(255,253,250,.98) 46%); overflow:hidden; }
+        .station-group-header::before { content:""; position:absolute; inset:0 auto 0 0; width:7px; background:var(--group-color); box-shadow:3px 0 0 rgba(11,30,50,.08); }
+        .station-group-header::after { content:""; position:absolute; width:86px; height:86px; right:-38px; top:-50px; border:1px solid color-mix(in srgb, var(--group-color) 48%, transparent); border-radius:50%; opacity:.7; }
+        .station-group-name { position:relative; z-index:1; font-size:16px; line-height:1.2; letter-spacing:-.035em; }
+        .station-group-kicker { position:relative; z-index:1; padding:3px 5px; color:var(--eta-ink); background:rgba(255,255,255,.54); border:1px solid rgba(11,30,50,.14); border-radius:4px; letter-spacing:.13em; }
+        .station-group-meta { position:relative; z-index:1; display:flex; align-items:center; gap:5px; }
+        .station-group-routes-label { color:var(--eta-ink-soft); font-family:var(--font-data); font-size:8px; font-weight:800; letter-spacing:.12em; }
+        .station-group-count { min-width:24px; height:24px; border-color:var(--eta-ink); background:var(--group-color); box-shadow:1px 1px 0 rgba(11,30,50,.15); }
+        .station-group-list .route-card { border-bottom:1px dashed rgba(11,30,50,.13) !important; }
+        .station-group-list .route-card:last-child { border-bottom:0 !important; }
+        #map-modal .map-header { min-height:60px; margin:0; padding:11px 14px; color:#fff; border-bottom:0; background:linear-gradient(105deg, #0b1e32, #183852); }
+        #map-modal .map-header::before { content:"LIVE ROUTE"; color:rgba(255,255,255,.52); font-family:var(--font-data); font-size:9px; font-weight:800; letter-spacing:.13em; }
+        #map-modal #map-title { font-size:18px; font-weight:850; letter-spacing:-.04em; }
+        #map-modal .map-style-select { border-color:rgba(255,255,255,.24)!important; background:rgba(255,255,255,.10)!important; font-family:var(--font-ui)!important; font-weight:700; }
+        #map-stop-list { background:#f4f1ea!important; padding:8px!important; }
+        #map-stop-list .stop-list-container { padding:0 0 14px!important; background:transparent!important; }
+        #map-stop-list .stop-item { margin:6px 0!important; padding:10px 8px!important; border:1px solid rgba(11,30,50,.13)!important; border-radius:8px!important; background:rgba(255,253,250,.95)!important; box-shadow:0 2px 0 rgba(11,30,50,.035)!important; }
+        #map-stop-list .stop-item.selected { border-color:var(--eta-ink)!important; box-shadow:0 0 0 2px var(--eta-yellow), 0 5px 14px rgba(11,30,50,.12)!important; }
+        #map-stop-list .stop-seq { width:24px; height:24px; display:grid; place-content:center; color:var(--eta-ink)!important; background:var(--eta-yellow); border-radius:50%; font-size:10px!important; }
+        #map-stop-list .stop-name { font-family:var(--font-ui)!important; font-size:14px!important; font-weight:760!important; letter-spacing:-.02em; }
+        #map-stop-list .stop-eta-container { min-width:52px; text-align:right; font-family:var(--font-data); }
+        .destination { font-family:var(--font-ui)!important; font-weight:760!important; letter-spacing:-.025em!important; }
+        .station-group-list .route-badge, .station-group-list .eta-list, .station-group-list .fare-watermark { font-family:var(--font-data)!important; font-variant-numeric:tabular-nums; }
+        @media (max-width:520px) {
+            .station-group { margin-bottom:12px; }
+            .station-group-header { min-height:48px; padding:8px 9px 8px 14px; }
+            .station-group-name { font-size:15px; }
+            .station-group-routes-label { display:none; }
+            #map-modal .map-header { min-height:54px; padding:8px 10px; }
+            #map-modal #map-title { font-size:16px; }
+        }
+        @media (min-width:900px) {
+            .header { background:linear-gradient(160deg, #0b1e32, #173954)!important; border-top-color:var(--eta-yellow)!important; box-shadow:8px 8px 0 rgba(254,219,0,.72), 0 16px 28px rgba(11,30,50,.14)!important; }
+            .header-actions .header-live-time { order:-1; flex:1; justify-content:center; }
+            .header .nav-item.active { border-left-color:var(--eta-yellow)!important; }
+        }
+        /* 空狀態、標誌與操作票據：讓沒有收藏時仍像可掃讀的站牌資訊板。 */
+        .header { border-radius:6px!important; }
+        .header > div[style*="justify-content:center"] { gap:0!important; }
+        .header .nav-item { border-radius:0!important; border-right:1px solid rgba(255,255,255,.13); }
+        .header .nav-item:first-child { border-radius:3px 0 0 3px!important; }
+        .header .nav-item:last-child { border-right:0; border-radius:0 3px 3px 0!important; }
+        .term-dots { position:relative; overflow:hidden; background:var(--eta-yellow)!important; }
+        .term-dots::before { content:""; position:absolute; z-index:2; left:50%; top:50%; width:19px; height:13px; transform:translate(-50%,-50%); border:2px solid var(--eta-ink); border-radius:3px 3px 2px 2px; background:linear-gradient(90deg, transparent 0 16%, var(--eta-ink) 16% 20%, transparent 20% 80%, var(--eta-ink) 80% 84%, transparent 84%), linear-gradient(var(--eta-ink) 0 22%, transparent 22% 72%, var(--eta-ink) 72% 78%, transparent 78%); box-shadow:-5px 12px 0 -3px var(--eta-ink), 5px 12px 0 -3px var(--eta-ink); }
+        .term-dots::after { content:""; position:absolute; z-index:3; right:2px; bottom:7px; width:27px; height:2px; background:var(--eta-ink); transform:rotate(-31deg); transform-origin:right center; box-shadow:-17px 7px 0 -0.35px var(--eta-ink); opacity:.9; }
+        #bus-container .empty-board { min-height:238px!important; display:grid!important; grid-template-columns:1fr!important; gap:14px!important; align-content:start!important; padding:16px!important; text-align:left!important; border:1px solid var(--eta-line)!important; border-radius:0!important; background:repeating-linear-gradient(0deg, transparent 0 31px, rgba(11,30,50,.055) 31px 32px), rgba(255,253,250,.90)!important; box-shadow:0 4px 0 rgba(11,30,50,.04)!important; }
+        #bus-container .empty-board::before, #bus-container .empty-board::after { content:none!important; display:none!important; }
+        #bus-container .empty-board > div { display:block!important; }
+        .empty-board-ticket { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding-bottom:12px; border-bottom:1px solid var(--eta-line); }
+        .empty-board-eyebrow { display:block; margin-bottom:5px; color:var(--eta-ink-soft); font-family:var(--font-data); font-size:10px; font-weight:800; letter-spacing:.12em; }
+        .empty-board-title { margin:0; color:var(--eta-ink); font-family:var(--font-ui); font-size:18px; font-weight:850; letter-spacing:-.04em; }
+        .empty-board-copy { margin:5px 0 0; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:12px; font-weight:650; line-height:1.55; }
+        .empty-board-cta { flex:0 0 auto; min-width:78px; min-height:58px; border:1px solid var(--eta-ink); background:var(--eta-yellow); color:var(--eta-ink); font-family:var(--font-data); font-size:10px; font-weight:850; letter-spacing:.04em; cursor:pointer; }
+        .empty-eta-demo { display:grid!important; grid-template-columns:62px minmax(0,1fr) 52px; align-items:center; gap:8px; padding:9px 8px; border-top:3px solid var(--eta-ink); border-bottom:1px dashed var(--eta-line); color:var(--eta-ink-soft); font-family:var(--font-data); font-size:10px; font-weight:800; letter-spacing:.06em; }
+        .empty-eta-demo span:last-child { justify-self:end; color:var(--eta-ink); background:var(--eta-yellow); padding:4px 6px; }
+        .empty-board-status { display:flex!important; align-items:center; gap:7px; color:var(--eta-ink-soft); font-family:var(--font-data); font-size:10px; font-weight:800; }
+        .empty-board-status::before { content:"●"; color:var(--eta-green); font-size:12px; }
+        .footer-actions { position:relative; display:flex!important; align-items:center; gap:7px!important; padding:12px 0 24px!important; border-top:1px dashed rgba(11,30,50,.24); }
+        .footer-actions .refresh-eta-btn { order:0; min-height:36px; box-shadow:2px 2px 0 rgba(11,30,50,.17)!important; }
+        .footer-actions .refresh-eta-status { order:1; padding:5px 7px; border-left:3px solid var(--eta-yellow); background:rgba(255,253,250,.86); }
+        .footer-actions .footer-btn:not(.refresh-eta-btn) { min-height:34px; color:var(--eta-ink-soft)!important; background:transparent!important; border-color:rgba(11,30,50,.18)!important; }
+        .footer-actions .footer-btn[onclick*="clearCache"] { margin-left:auto; color:#a93442!important; border-color:rgba(169,52,66,.28)!important; }
+        @media (max-width:520px) {
+            #bus-container .empty-board { min-height:218px!important; padding:13px!important; }
+            .empty-board-title { font-size:16px; }
+            .empty-board-cta { min-width:66px; min-height:52px; font-size:9px; }
+            .footer-actions .footer-btn[onclick*="clearCache"] { margin-left:0; }
+        }
         @media (prefers-reduced-motion: reduce) { .refresh-eta-btn.is-refreshing svg { animation:none; } }
         @media (min-width: 900px) { .station-group-list .route-card { min-height: 42px !important; } }
         @media (max-width: 520px) {
@@ -2578,9 +2662,17 @@
                 const container = document.getElementById('bus-container');
                 if(this.state.savedRoutes.length === 0) { 
                     container.innerHTML = `
-                        <div class="status-message">
-                            <div style="font-size: 50px; margin-bottom: 20px;">⭐</div>
-                            目前沒有儲存任何路線。<br>請點擊下方「🔍 搜尋」新增。
+                        <div class="status-message empty-board">
+                            <div class="empty-board-ticket">
+                                <div>
+                                    <span class="empty-board-eyebrow">MY ETA BOARD · READY</span>
+                                    <h2 class="empty-board-title">建立第一張到站看板</h2>
+                                    <p class="empty-board-copy">從搜尋選擇路線與站點，下一班車會在這裡對齊顯示。</p>
+                                </div>
+                                <button class="empty-board-cta" type="button" onclick="app.switchTab('routes')">＋<br>新增路線</button>
+                            </div>
+                            <div class="empty-eta-demo" aria-label="到站資訊欄位預覽"><span>ROUTE</span><span>目的地</span><span>ETA</span></div>
+                            <div class="empty-board-status">路線資料與到站服務已就緒</div>
                         </div>`; 
                     return; 
                 }
@@ -2658,6 +2750,8 @@
                         else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'lightRail') { badgeClass = 'bg-lightRail'; opTint = 'op-lightRail'; }
                         else if ((Array.isArray(item.route.operators) ? item.route.operators[0] : item.route.operators) === 'lrtfeeder') { badgeClass = 'bg-lrtfeeder'; opTint = 'op-lrtfeeder'; }
                         cardDiv.classList.add(opTint);
+                        const routeOperator = this.normalizeOperator(item.route.operators?.[0] || item.route.operator || 'kmb');
+                        const groupColor = this.getPrimaryColor(routeOperator);
 
                         let etaHtml = item.etas.length === 0 ? `<div class="eta-row no-data">暫無班次</div>` : item.etas.slice(0, 2).map((eta, i) => {
                             const isArriving = eta.min === 0;
@@ -2707,12 +2801,13 @@
                         if (!group) {
                             group = document.createElement('section');
                             group.className = 'station-group';
+                            group.style.setProperty('--group-color', groupColor);
                             group.innerHTML = `
                                 <div class="station-group-header">
                                     <button class="station-group-drag-handle" type="button" aria-label="拖曳排序車站" title="拖曳排序車站"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"><line x1="7" y1="6" x2="17" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="18" x2="17" y2="18"></line></svg></button>
                                     <span class="station-group-kicker">STOP</span>
                                     <span class="station-group-name"></span>
-                                    <span class="station-group-count">0</span>
+                                    <span class="station-group-meta"><span class="station-group-routes-label">ROUTES</span><span class="station-group-count">0</span></span>
                                 </div>
                                 <div class="station-group-list"></div>
                             `;

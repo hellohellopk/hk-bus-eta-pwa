@@ -1,0 +1,19 @@
+{
+  "name": "HK Bus ETA",
+  "short_name": "Bus ETA",
+  "description": "香港巴士到站時間與收藏路線看板。",
+  "lang": "zh-HK",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f4f1ea",
+  "theme_color": "#fedb00",
+  "icons": [
+    {
+      "src": "icons/bus-eta-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

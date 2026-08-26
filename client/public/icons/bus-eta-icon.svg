@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title">
+  <title>HK Bus ETA</title>
+  <rect width="512" height="512" rx="104" fill="#fedb00"/>
+  <path d="M89 376c38-85 87-130 151-130 60 0 106 34 184 10" fill="none" stroke="#0b1e32" stroke-width="28" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="89" cy="376" r="22" fill="#ce3043" stroke="#0b1e32" stroke-width="12"/>
+  <circle cx="424" cy="256" r="22" fill="#ce3043" stroke="#0b1e32" stroke-width="12"/>
+  <path d="M145 136h192c28 0 51 23 51 51v128H124V187c0-28 22-51 51-51Z" fill="#0b1e32"/>
+  <rect x="159" y="169" width="194" height="75" rx="15" fill="#fffdf5"/>
+  <path d="M143 276h226" stroke="#fedb00" stroke-width="13"/>
+  <circle cx="183" cy="333" r="30" fill="#fffdf5" stroke="#0b1e32" stroke-width="14"/>
+  <circle cx="329" cy="333" r="30" fill="#fffdf5" stroke="#0b1e32" stroke-width="14"/>
+</svg>

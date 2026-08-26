@@ -87,3 +87,7 @@
 - [x] 核對 45×26px 徽章與卡片內容的最小高度。
 - [x] 收窄行動版巴士卡片高度及垂直留白。
 - [x] 驗證目的地、票價與 ETA 在緊湊卡片中不重疊。
+- [ ] 盤點現有 Vite 建置設定與 GitHub repository 狀態。
+- [ ] 加入 PWA manifest、圖示與 service worker 離線快取。
+- [ ] 建立 GitHub Pages 建置與發布工作流程。
+- [ ] 建置、發布並驗證公開網址及 PWA 安裝條件。

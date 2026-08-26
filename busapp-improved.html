@@ -920,6 +920,11 @@
         #bus-container { overflow: visible; background: transparent; border-bottom: 0; }
         .station-group { margin: 0 0 14px; overflow:hidden; border: 1px solid var(--eta-line); border-radius: 12px; background: rgba(255,253,250,.88); box-shadow: 0 3px 0 rgba(11,30,50,.035); }
         .station-group-header { display: flex; align-items: center; min-height: 46px; padding: 8px 12px; gap: 10px; color: var(--eta-ink); border-bottom: 2px solid var(--eta-ink); background: linear-gradient(90deg, var(--eta-yellow) 0 8px, rgba(255,253,250,.98) 8px); }
+        .station-group-drag-handle { display:none; width:30px; height:30px; align-items:center; justify-content:center; padding:0; color:var(--eta-ink-soft); border:1px solid var(--eta-line); border-radius:4px; background:rgba(255,253,250,.9); cursor:grab; touch-action:none; flex:0 0 auto; }
+        .station-group-drag-handle:active { cursor:grabbing; transform:scale(.96); }
+        .edit-mode .station-group-drag-handle { display:inline-flex; }
+        .station-group.station-group-sortable-ghost { opacity:.42; border-style:dashed; background:rgba(254,219,0,.16); }
+        .station-group.station-group-sortable-chosen { box-shadow:0 10px 24px rgba(11,30,50,.16); }
         .station-group-kicker { color: var(--eta-ink-soft); font-family: var(--font-data); font-size: 9px; font-weight: 800; letter-spacing: .10em; }
         .station-group-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-family: var(--font-ui); font-size: 15px; font-weight: 800; letter-spacing: -.025em; }
         .station-group-count { display: grid; min-width: 22px; height: 22px; place-content: center; color: var(--eta-ink); font-family: var(--font-data); font-size: 10px; font-weight: 800; border: 1px solid var(--eta-ink); background: var(--eta-yellow); }
@@ -2646,6 +2651,7 @@
                             group.className = 'station-group';
                             group.innerHTML = `
                                 <div class="station-group-header">
+                                    <button class="station-group-drag-handle" type="button" aria-label="拖曳排序車站" title="拖曳排序車站"><svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.2" fill="none" stroke-linecap="round"><line x1="7" y1="6" x2="17" y2="6"></line><line x1="7" y1="12" x2="17" y2="12"></line><line x1="7" y1="18" x2="17" y2="18"></line></svg></button>
                                     <span class="station-group-kicker">STOP</span>
                                     <span class="station-group-name"></span>
                                     <span class="station-group-count">0</span>
@@ -2692,24 +2698,46 @@
                 }
             },
 
+            saveFavouriteOrderFromDOM(container) {
+                const previousRoutes = this.state.savedRoutes.slice();
+                const order = Array.from(container.querySelectorAll('.route-card')).map(card => Number(card.dataset.savedIndex));
+                const reorderedRoutes = order.map(index => previousRoutes[index]).filter(Boolean);
+                if (reorderedRoutes.length !== previousRoutes.length) return;
+                this.state.savedRoutes = reorderedRoutes;
+                this.saveData(false);
+            },
+            rerenderEditableFavourites(container) {
+                this.renderBuses().then(() => {
+                    if (this.state.isEditMode) {
+                        container.classList.add('edit-mode');
+                        this.setupStationSortables(container);
+                    }
+                });
+            },
             setupStationSortables(container) {
                 if (typeof Sortable === 'undefined') return;
-                this.state.sortableInstance = Array.from(container.querySelectorAll('.station-group-list')).map(list =>
+                if (Array.isArray(this.state.sortableInstance)) this.state.sortableInstance.forEach(instance => instance?.destroy());
+                else if (this.state.sortableInstance) this.state.sortableInstance.destroy();
+
+                const routeSortables = Array.from(container.querySelectorAll('.station-group-list')).map(list =>
                     new Sortable(list, {
+                        group: { name: 'station-routes', pull: false, put: false },
                         handle: '.drag-handle', animation: 150, ghostClass: 'sortable-ghost',
                         onEnd: () => {
-                            const order = Array.from(container.querySelectorAll('.route-card')).map(card => Number(card.dataset.savedIndex));
-                            this.state.savedRoutes = order.map(index => this.state.savedRoutes[index]);
-                            this.saveData(false);
-                            this.renderBuses().then(() => {
-                                if (this.state.isEditMode) {
-                                    container.classList.add('edit-mode');
-                                    this.setupStationSortables(container);
-                                }
-                            });
+                            this.saveFavouriteOrderFromDOM(container);
+                            this.rerenderEditableFavourites(container);
                         }
                     })
                 );
+                const groupSortable = new Sortable(container, {
+                    draggable: '.station-group', handle: '.station-group-drag-handle', animation: 180,
+                    ghostClass: 'station-group-sortable-ghost', chosenClass: 'station-group-sortable-chosen',
+                    onEnd: () => {
+                        this.saveFavouriteOrderFromDOM(container);
+                        this.rerenderEditableFavourites(container);
+                    }
+                });
+                this.state.sortableInstance = [...routeSortables, groupSortable];
             },
             toggleEditMode() {
                 if (this.state.savedRoutes.length === 0) return alert("目前沒有路線可以編輯喔！");

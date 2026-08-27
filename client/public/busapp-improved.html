@@ -1173,6 +1173,17 @@
             .station-group-list .eta-primary strong { font-size:20px!important; }
             .station-group-list .eta-secondary strong { font-size:13px!important; }
         }
+        /* Map control reminder — fixed public-transit command bar: remain visible above the stop-list scroll and below the iOS safe area. */
+        #map-modal .map-modal-content { padding-top:calc(max(12px, env(safe-area-inset-top)) + 48px)!important; }
+        #map-modal .map-header {
+            position:fixed!important; top:env(safe-area-inset-top)!important; left:50%; z-index:2200!important;
+            width:min(100%, 760px); min-height:48px!important; box-sizing:border-box; transform:translateX(-50%);
+            flex:none!important; box-shadow:0 3px 12px rgba(0,0,0,.28)!important;
+        }
+        @media (max-width:520px) {
+            #map-modal .map-modal-content { padding-top:calc(max(10px, env(safe-area-inset-top)) + 44px)!important; }
+            #map-modal .map-header { min-height:44px!important; }
+        }
     </style>
 </head>
 <body>

@@ -1184,6 +1184,22 @@
             #map-modal .map-modal-content { padding-top:calc(max(10px, env(safe-area-inset-top)) + 44px)!important; }
             #map-modal .map-header { min-height:44px!important; }
         }
+        /* Map interaction shell: controls belong to the viewport, while only the map canvas and stop list may move. */
+        body.map-open { height:100dvh; overflow:hidden; overscroll-behavior:none; }
+        #map-modal .map-split-container, #map-split-container { min-height:0; overscroll-behavior:none; }
+        #map-stop-list { min-height:0; overscroll-behavior:contain; -webkit-overflow-scrolling:touch; }
+        #map-modal .map-route-card {
+            position:fixed!important; top:calc(env(safe-area-inset-top) + 62px)!important;
+            left:calc(50% - min(50vw, 380px) + 68px)!important; z-index:2300!important;
+        }
+        #map-modal .map-gps-btn {
+            position:fixed!important; right:calc(50% - min(50vw, 380px) + 16px)!important;
+            bottom:max(16px, env(safe-area-inset-bottom))!important; z-index:2300!important;
+        }
+        @media (max-width:520px) {
+            #map-modal .map-route-card { top:calc(env(safe-area-inset-top) + 54px)!important; left:calc(50% - 50vw + 62px)!important; }
+            #map-modal .map-gps-btn { right:16px!important; bottom:max(16px, env(safe-area-inset-bottom))!important; }
+        }
     </style>
 </head>
 <body>
@@ -3144,6 +3160,7 @@
                 const modal = document.getElementById('map-modal'); const mapContainer = document.getElementById('map-split-container'); const loading = document.getElementById('map-loading');
                 
                 document.getElementById('map-title').innerText = `${routeObj.route} 沿途車站`;
+                document.body.classList.add('map-open');
                 modal.style.display = 'flex'; mapContainer.style.display = 'none'; 
                 document.getElementById('map-route-card').hidden = true;
                 loading.innerText = '正在載入地圖引擎... ⏳';
@@ -3294,6 +3311,7 @@
 
             closeMapModal() { 
                 document.getElementById('map-modal').style.display = 'none'; 
+                document.body.classList.remove('map-open');
                 document.getElementById('map-route-card').hidden = true;
                 if (this.state.gpsWatchId) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
             },

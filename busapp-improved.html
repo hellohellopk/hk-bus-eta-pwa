@@ -1200,6 +1200,17 @@
             #map-modal .map-route-card { top:calc(env(safe-area-inset-top) + 54px)!important; left:calc(50% - 50vw + 62px)!important; }
             #map-modal .map-gps-btn { right:16px!important; bottom:max(16px, env(safe-area-inset-bottom))!important; }
         }
+        .map-gps-btn.requesting { color:#fff!important; background:#315e84!important; }
+        .map-location-status {
+            position:fixed; right:calc(50% - min(50vw, 380px) + 16px); bottom:calc(max(16px, env(safe-area-inset-bottom)) + 56px);
+            z-index:2300; max-width:218px; padding:7px 9px; color:#fff; background:rgba(11,30,50,.94);
+            border:1px solid rgba(255,255,255,.22); border-radius:4px; box-shadow:0 4px 12px rgba(0,0,0,.24);
+            font-family:var(--font-ui); font-size:11px; font-weight:700; line-height:1.35;
+        }
+        .map-location-status.is-error { background:#812b36; }
+        .map-location-status.is-success { background:#145a3d; }
+        .map-location-status[hidden] { display:none; }
+        @media (max-width:520px) { .map-location-status { right:16px; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 56px); max-width:190px; } }
     </style>
 </head>
 <body>
@@ -1342,6 +1353,7 @@
                 <button class="map-gps-btn" id="map-gps-btn" onclick="app.toggleLiveGPS()" title="定位我的位置">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
                 </button>
+                <div class="map-location-status" id="map-location-status" role="status" aria-live="polite" hidden></div>
 
                 <div id="map-stop-list" style="flex: 1; overflow-y: auto; background: #fff; position: relative;"></div>
             </div>
@@ -1423,7 +1435,10 @@
                 stopList: null,
                 isDataReady: false,
                 gpsWatchId: null,
-                userLocationMarker: null
+                userLocationMarker: null,
+                isLocationRequesting: false,
+                locationPermission: 'unknown',
+                locationStatusTimer: null
             },
             
             cache: { ctbStopsDetail: {}, gmbStopsCoords: {} },
@@ -3102,32 +3117,81 @@
                 }
             },
 
+            showMapLocationStatus(message, type = '') {
+                const status = document.getElementById('map-location-status');
+                if (!status) return;
+                status.textContent = message;
+                status.className = `map-location-status${type ? ` is-${type}` : ''}`;
+                status.hidden = false;
+                clearTimeout(this.state.locationStatusTimer);
+                this.state.locationStatusTimer = setTimeout(() => { status.hidden = true; }, type === 'error' ? 7000 : 4200);
+            },
+
+            updateUserLocation(lat, lng) {
+                if (!this.state.routeMap) return;
+                if (!this.state.userLocationMarker) {
+                    this.state.userLocationMarker = L.circleMarker([lat, lng], {
+                        radius: 7, fillColor: '#007aff', color: '#fff', weight: 2, opacity: 1, fillOpacity: 1, zIndexOffset: 2000
+                    }).bindPopup('<b>目前位置</b>').addTo(this.state.routeMap);
+                } else {
+                    this.state.userLocationMarker.setLatLng([lat, lng]);
+                }
+                this.state.routeMap.setView([lat, lng], 17);
+            },
+
+            locationErrorMessage(error) {
+                if (error?.code === 1) return '定位權限未開啟。請在瀏覽器設定允許位置後再試。';
+                if (error?.code === 2) return '暫時無法取得位置，請確認 GPS 或網絡連線。';
+                if (error?.code === 3) return '取得位置逾時，請移到較開揚的位置後再試。';
+                return '暫時無法取得位置，請稍後再試。';
+            },
+
             toggleLiveGPS() {
                 const btn = document.getElementById('map-gps-btn');
-                if (this.state.gpsWatchId) {
+                if (this.state.gpsWatchId !== null) {
                     navigator.geolocation.clearWatch(this.state.gpsWatchId);
                     this.state.gpsWatchId = null;
                     if (this.state.userLocationMarker) { this.state.routeMap.removeLayer(this.state.userLocationMarker); this.state.userLocationMarker = null; }
                     btn.classList.remove('tracking');
+                    btn.title = '使用目前位置';
+                    this.showMapLocationStatus('已停止使用目前位置。');
                     return;
                 }
-                if (!navigator.geolocation) return alert("您的設備不支援定位功能");
-                btn.classList.add('tracking');
-                
-                this.state.gpsWatchId = navigator.geolocation.watchPosition((pos) => {
+                if (!navigator.geolocation) {
+                    this.showMapLocationStatus('此裝置或瀏覽器不支援定位功能。', 'error');
+                    return;
+                }
+                if (this.state.isLocationRequesting) return;
+                this.state.isLocationRequesting = true;
+                btn.classList.add('requesting');
+                btn.title = '正在請求定位權限';
+                this.showMapLocationStatus('請在瀏覽器提示中允許使用目前位置。');
+
+                const onSuccess = (pos) => {
                     const lat = pos.coords.latitude, lng = pos.coords.longitude;
-                    if (!this.state.userLocationMarker && this.state.routeMap) {
-                        this.state.userLocationMarker = L.circleMarker([lat, lng], {
-                            radius: 7, fillColor: "var(--apple-blue)", color: "#fff", weight: 2, opacity: 1, fillOpacity: 1, zIndexOffset: 2000
-                        }).bindPopup("<b>目前位置</b>").addTo(this.state.routeMap);
-                    } else if (this.state.userLocationMarker) {
-                        this.state.userLocationMarker.setLatLng([lat, lng]);
+                    this.state.isLocationRequesting = false;
+                    this.state.locationPermission = 'granted';
+                    btn.classList.remove('requesting');
+                    btn.classList.add('tracking');
+                    btn.title = '停止使用目前位置';
+                    this.updateUserLocation(lat, lng);
+                    this.showMapLocationStatus('已使用目前位置；再次點擊可停止。', 'success');
+                    if (this.state.gpsWatchId === null) {
+                        this.state.gpsWatchId = navigator.geolocation.watchPosition(
+                            nextPos => this.updateUserLocation(nextPos.coords.latitude, nextPos.coords.longitude),
+                            error => this.showMapLocationStatus(this.locationErrorMessage(error), 'error'),
+                            { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+                        );
                     }
-                    if (this.state.routeMap) this.state.routeMap.setView([lat, lng], 17);
-                }, (err) => {
-                    alert("無法獲取定位！請確認已開啟 GPS 權限。");
-                    this.toggleLiveGPS();
-                }, { enableHighAccuracy: true, maximumAge: 5000 });
+                };
+                const onError = (error) => {
+                    this.state.isLocationRequesting = false;
+                    this.state.locationPermission = error?.code === 1 ? 'denied' : 'unknown';
+                    btn.classList.remove('requesting', 'tracking');
+                    btn.title = '使用目前位置';
+                    this.showMapLocationStatus(this.locationErrorMessage(error), 'error');
+                };
+                navigator.geolocation.getCurrentPosition(onSuccess, onError, { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 });
             },
 
             getMapFareArray(routeObj, operator) {
@@ -3229,8 +3293,11 @@
                     
                     if (this.state.routeMap) {
                         this.state.routeMap.remove();
+                        if (this.state.gpsWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(this.state.gpsWatchId);
                         this.state.gpsWatchId = null; this.state.userLocationMarker = null; 
+                        this.state.isLocationRequesting = false;
                         document.getElementById('map-gps-btn').classList.remove('tracking');
+                        document.getElementById('map-location-status').hidden = true;
                     }
                     
                     // 初始化地圖並載入所選的地圖樣式
@@ -3313,7 +3380,10 @@
                 document.getElementById('map-modal').style.display = 'none'; 
                 document.body.classList.remove('map-open');
                 document.getElementById('map-route-card').hidden = true;
-                if (this.state.gpsWatchId) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
+                document.getElementById('map-location-status').hidden = true;
+                if (this.state.gpsWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
+                this.state.isLocationRequesting = false;
+                document.getElementById('map-gps-btn').classList.remove('requesting', 'tracking');
             },
             
             clickStopInList(seq, lat, lng, stopId) {

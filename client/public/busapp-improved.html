@@ -278,6 +278,25 @@
         .map-gps-btn.tracking { color: #fff; background: var(--apple-blue); }
         .leaflet-control-attribution { display: none !important; }
 
+        /* Map overlay reminder — high-contrast transit label: a fixed ink-black card anchors route and fare without obscuring controls. */
+        .map-route-card {
+            position: absolute; top: 14px; left: 68px; z-index: 1200; min-width: 148px;
+            display: grid; grid-template-columns: auto 1fr; column-gap: 12px; row-gap: 3px;
+            align-items: baseline; padding: 9px 12px 10px; color: #fff; background: #101820;
+            border: 1px solid rgba(255,255,255,.18); border-radius: 4px;
+            box-shadow: 0 5px 16px rgba(0,0,0,.30); font-family: var(--font-data, monospace);
+            pointer-events: none;
+        }
+        .map-route-card[hidden] { display: none; }
+        .map-route-card-label { color: rgba(255,255,255,.62); font-size: 9px; font-weight: 900; letter-spacing: .10em; white-space: nowrap; }
+        .map-route-card-value { color: #fff; font-size: 18px; font-weight: 900; letter-spacing: -.03em; line-height: 1; white-space: nowrap; }
+        .map-route-card-value.route-number { color: var(--eta-yellow, #fedb00); font-size: 27px; }
+        @media (max-width:520px) {
+            .map-route-card { top: 10px; left: 62px; min-width: 132px; padding: 8px 10px 9px; column-gap: 10px; }
+            .map-route-card-value { font-size: 16px; }
+            .map-route-card-value.route-number { font-size: 24px; }
+        }
+
 
         /* === Mac Terminal Light Theme === */
         :root {
@@ -1288,6 +1307,10 @@
             
             <div id="map-split-container" style="display:none; flex: 1; flex-direction: column; overflow: hidden; position: relative;">
                 <div id="map-container" style="flex: 0 0 40%; width: 100%; border-bottom: 1px solid #e5e5ea; z-index: 1;"></div>
+                <div class="map-route-card" id="map-route-card" hidden aria-label="路線與車費資訊">
+                    <span class="map-route-card-label">巴士號碼</span><strong class="map-route-card-value route-number" id="map-route-number">—</strong>
+                    <span class="map-route-card-label">車費</span><strong class="map-route-card-value" id="map-route-fare">—</strong>
+                </div>
                 
                 <button class="map-gps-btn" id="map-gps-btn" onclick="app.toggleLiveGPS()" title="定位我的位置">
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
@@ -3080,6 +3103,30 @@
                 }, { enableHighAccuracy: true, maximumAge: 5000 });
             },
 
+            getMapFareArray(routeObj, operator) {
+                if (!this.state.routeList) return [];
+                let matched = routeObj.routeKey ? this.state.routeList[routeObj.routeKey] : null;
+                if (!matched) {
+                    matched = Object.values(this.state.routeList).find(route =>
+                        String(route.route) === String(routeObj.route) &&
+                        Array.isArray(route.co) && route.co.some(co => this.normalizeOperator(co) === operator)
+                    );
+                }
+                return Array.isArray(matched?.fares) ? matched.fares : [];
+            },
+
+            updateMapRouteCard(routeObj, stops, targetStopId, fares) {
+                const card = document.getElementById('map-route-card');
+                const routeNumber = document.getElementById('map-route-number');
+                const routeFare = document.getElementById('map-route-fare');
+                if (!card || !routeNumber || !routeFare) return;
+                const targetIndex = stops.findIndex(stop => targetStopId !== null && String(stop.id) === String(targetStopId));
+                const rawFare = fares[targetIndex >= 0 ? targetIndex : 0] ?? fares[0];
+                routeNumber.textContent = String(routeObj.route || '—');
+                routeFare.textContent = rawFare !== undefined && rawFare !== null && rawFare !== '' ? `$${String(rawFare).replace(/^\$/, '')}` : '—';
+                card.hidden = false;
+            },
+
             async openMapModal(routeObj) {
                 if (this.state.isEditMode) return;
                 this.state.currentMapRouteContext = routeObj; 
@@ -3087,6 +3134,7 @@
                 
                 document.getElementById('map-title').innerText = `${routeObj.route} 沿途車站`;
                 modal.style.display = 'flex'; mapContainer.style.display = 'none'; 
+                document.getElementById('map-route-card').hidden = true;
                 loading.innerText = '正在載入地圖引擎... ⏳';
                 loading.style.display = 'block';
 
@@ -3148,6 +3196,8 @@
 
                     this.state.currentMapStops = stops;
                     loading.style.display = 'none'; mapContainer.style.display = 'flex';
+                    const mapFareArr = this.getMapFareArray(routeObj, operator);
+                    this.updateMapRouteCard(routeObj, stops, targetStopId, mapFareArr);
                     
                     if (this.state.routeMap) {
                         this.state.routeMap.remove();
@@ -3180,35 +3230,7 @@
                         let starColor = isSaved ? '#FFCC00' : '#e5e5ea';
                         let starFill = isSaved ? '#FFCC00' : 'none';
 
-                        // 車費 (map modal) - 支援 routeKey 或 route+dir 比對
-                        let mFareArr = null;
-                        if (this.state.routeList) {
-                            const rk = routeObj.routeKey;
-                            if (rk && this.state.routeList[rk]) {
-                                mFareArr = this.state.routeList[rk].fares;
-                            } else {
-                                // fallback: match by route + operator + direction (from favourites)
-                                const op = (routeObj.operators?.[0] || routeObj.operator || '').toLowerCase();
-                                const rawDir = routeObj.kmb_dir || routeObj.ctb_dir || routeObj.dir || routeObj.bound || 'O';
-                                const dir = (rawDir === 'I' || rawDir === 'inbound') ? 'I' : 'O';
-                                console.log('[fare] fallback lookup:', routeObj.route, op, dir);
-                                // Try exact match first
-                                let matched = Object.values(this.state.routeList).find(r =>
-                                    r.route === routeObj.route && r.co?.includes(op) && r.bound?.[op] === dir
-                                );
-                                // If not found, try any direction for this route+op
-                                if (!matched) matched = Object.values(this.state.routeList).find(r =>
-                                    r.route === routeObj.route && r.co?.includes(op)
-                                );
-                                // If still not found, try route number only
-                                if (!matched) matched = Object.values(this.state.routeList).find(r =>
-                                    r.route === routeObj.route
-                                );
-                                if (matched) { mFareArr = matched.fares; console.log('[fare] matched fares:', mFareArr?.slice(0,3)); }
-                                else console.warn('[fare] no match for', routeObj.route, op, dir);
-                            }
-                        }
-                        const mFareVal = Array.isArray(mFareArr) && mFareArr[idx] ? mFareArr[idx] : '';
+                        const mFareVal = Array.isArray(mapFareArr) && mapFareArr[idx] ? mapFareArr[idx] : '';
 
                         listHtml += `
                             <div class="stop-item ${isTarget ? 'selected' : ''}" id="stop-item-${s.seq}" onclick="app.clickStopInList(${s.seq}, ${s.lat ? s.lat : 'null'}, ${s.lng ? s.lng : 'null'}, '${s.id}')">
@@ -3261,6 +3283,7 @@
 
             closeMapModal() { 
                 document.getElementById('map-modal').style.display = 'none'; 
+                document.getElementById('map-route-card').hidden = true;
                 if (this.state.gpsWatchId) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
             },
             

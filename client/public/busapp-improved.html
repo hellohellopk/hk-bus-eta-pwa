@@ -1257,6 +1257,9 @@
         .nearby-route-eta { min-width:52px; color:#b62d3e; font-family:var(--font-data, monospace); font-size:11px; font-weight:900; text-align:right; white-space:nowrap; }
         .nearby-route-eta.loading { color:var(--eta-ink-soft); font-size:10px; }
         .nearby-route-empty { padding:14px 8px; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:12px; font-weight:650; text-align:center; }
+        .nearby-route-panel .nearby-fav-route-card { width:100%; color:inherit; background:#fffdf9!important; text-align:left; cursor:pointer; }
+        .nearby-route-panel .nearby-fav-route-card:active { transform:translateY(1px); background:#fff9d5!important; }
+        .nearby-route-panel .nearby-fav-route-card:focus-visible { outline:3px solid var(--eta-yellow); outline-offset:-3px; }
         /* Nearby route rows follow the favourite-card information hierarchy: operator colour, destination, fare, then two ETAs. */
         .nearby-route-panel .nearby-fav-route-card { min-height:58px!important; margin:0!important; padding:7px 9px 7px 7px!important; border:1px solid rgba(11,30,50,.14)!important; border-left:5px solid transparent!important; border-radius:0!important; box-shadow:none!important; cursor:default; }
         .nearby-route-panel .nearby-fav-route-card.op-kmb { border-left-color:#ce3043!important; } .nearby-route-panel .nearby-fav-route-card.op-ctb { border-left-color:#e7b600!important; } .nearby-route-panel .nearby-fav-route-card.op-nlb { border-left-color:#0072c6!important; } .nearby-route-panel .nearby-fav-route-card.op-gmb { border-left-color:#008f4c!important; } .nearby-route-panel .nearby-fav-route-card.op-lightRail { border-left-color:#e7e7e7!important; } .nearby-route-panel .nearby-fav-route-card.op-lrtfeeder { border-left-color:#f57c00!important; }
@@ -3380,6 +3383,22 @@
                 if (!routes.length) { panel.innerHTML = '<div class="nearby-route-empty">暫未找到此站的途經巴士路線。</div>'; return; }
                 panel.innerHTML = `<div class="nearby-route-panel-title">途經路線 · ${routes.length} 條</div><div class="nearby-route-list">${routes.map((item, index) => { const style = this.getNearbyRouteStyle(item.operator); const fare = item.fare !== undefined && item.fare !== null && item.fare !== '' ? `<div class="fare-watermark">$${this.escapeNearbyHTML(String(item.fare).replace(/^\$/, ''))}</div>` : ''; return `<div class="route-card nearby-fav-route-card ${style.cardClass}"><div class="bus-left"><div class="route-badge ${style.badgeClass}">${this.escapeNearbyHTML(item.route)}</div><div class="route-info"><div class="destination">往 ${this.escapeNearbyHTML(item.destination)}</div></div></div>${fare}<div class="eta-list nearby-route-eta loading" id="nearby-route-eta-${token}-${index}"><div class="eta-row eta-primary">…</div></div></div>`; }).join('')}</div>`;
                 this.loadNearbyRouteETAs(routes, token);
+                panel.querySelectorAll('.nearby-fav-route-card').forEach((card, index) => {
+                    card.setAttribute('role', 'button');
+                    card.tabIndex = 0;
+                    card.setAttribute('aria-label', `${routes[index].route} 往 ${routes[index].destination}：開啟完整路線地圖`);
+                    card.addEventListener('click', () => this.openNearbyRouteMap(stopId, index));
+                    card.addEventListener('keydown', event => {
+                        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.openNearbyRouteMap(stopId, index); }
+                    });
+                });
+            },
+
+            openNearbyRouteMap(stopId, routeIndex) {
+                const routes = this.getRoutesForNearbyStop(stopId);
+                const item = routes[Number(routeIndex)];
+                if (!item) return;
+                this.openMapModal(this.nearbyRouteContext(item));
             },
 
             renderNearbyStops() {

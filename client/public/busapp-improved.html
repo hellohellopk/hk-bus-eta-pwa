@@ -1277,6 +1277,20 @@
         @media (max-width:520px) { .nearby-route-panel .nearby-fav-route-card { min-height:52px!important; padding:5px 7px 5px 6px!important; } .nearby-route-panel .nearby-fav-route-card .bus-left { gap:7px!important; } .nearby-route-panel .nearby-fav-route-card .route-badge { min-width:45px!important; height:26px!important; font-size:20px!important; } .nearby-route-panel .nearby-fav-route-card .destination { font-size:15px!important; } .nearby-route-panel .nearby-fav-route-card .fare-watermark { font-size:14px!important; margin-right:0!important; } .nearby-route-panel .nearby-fav-route-card .eta-list { min-width:47px!important; } .nearby-route-panel .nearby-fav-route-card .eta-primary strong { font-size:19px!important; } .nearby-route-panel .nearby-fav-route-card .eta-secondary strong { font-size:13px!important; } }
         .nearby-empty { margin-top:18px; padding:30px 18px; color:var(--eta-ink-soft); border:1px dashed var(--eta-line); background:rgba(255,253,250,.72); text-align:center; font-family:var(--font-ui); font-size:14px; font-weight:650; line-height:1.65; }
         @media (max-width:520px) { .nearby-intro { padding:11px 10px; } .nearby-intro strong { font-size:16px; } .nearby-stop { grid-template-columns:32px minmax(0,1fr) auto auto; gap:7px; padding:10px 9px; } .nearby-name { font-size:14px; } .nearby-distance { font-size:12px; } .nearby-route-panel { padding:8px; } .nearby-route-row { grid-template-columns:43px minmax(0,1fr) 47px; gap:6px; padding:6px; } .nearby-route-badge { min-width:38px; font-size:14px; } }
+        /* Map-stop route sheet uses the familiar route, fare and dual-ETA hierarchy while remaining fixed as the map moves. */
+        .map-stop-routes-panel { position:fixed; right:50%; bottom:0; left:50%; z-index:2450; width:min(100%, 760px); max-height:min(52dvh, 480px); overflow:auto; color:var(--eta-ink); border:1px solid var(--eta-ink); border-bottom:0; border-radius:12px 12px 0 0; background:#fffdf9; box-shadow:0 -10px 30px rgba(11,30,50,.22); transform:translateX(-50%); overscroll-behavior:contain; }
+        .map-stop-routes-panel[hidden] { display:none; }
+        .map-stop-routes-header { position:sticky; top:0; z-index:1; display:flex; align-items:center; justify-content:space-between; gap:10px; padding:10px 12px; color:#fff; background:#101820; }
+        .map-stop-routes-kicker { display:block; color:var(--eta-yellow); font-family:var(--font-data, monospace); font-size:9px; font-weight:900; letter-spacing:.1em; }
+        .map-stop-routes-name { display:block; overflow:hidden; max-width:calc(100vw - 110px); margin-top:2px; color:#fff; font-family:var(--font-ui); font-size:15px; font-weight:850; text-overflow:ellipsis; white-space:nowrap; }
+        .map-stop-routes-close { flex:0 0 auto; width:30px; height:30px; color:#fff; border:1px solid rgba(255,255,255,.36); border-radius:4px; background:rgba(255,255,255,.08); font-size:23px; line-height:1; cursor:pointer; }
+        .map-stop-routes-panel .nearby-route-panel { padding:8px; background:#f6f4ed; }
+        .map-stop-routes-panel .nearby-route-panel-title { margin:0 0 6px; }
+        .map-stop-routes-panel .nearby-fav-route-card { width:100%; color:inherit; background:#fffdf9!important; text-align:left; cursor:pointer; }
+        .map-stop-routes-panel .nearby-fav-route-card:active { transform:translateY(1px); background:#fff9d5!important; }
+        .map-stop-routes-panel .nearby-fav-route-card:focus-visible { outline:3px solid var(--eta-yellow); outline-offset:-3px; }
+        #map-modal .map-gps-btn, #map-modal .map-location-status { z-index:2500!important; }
+        @media (max-width:520px) { .map-stop-routes-panel { max-height:50dvh; } .map-stop-routes-header { padding:9px 10px; } .map-stop-routes-name { font-size:14px; } }
     </style>
 </head>
 <body>
@@ -1435,6 +1449,10 @@
                     <span class="map-nearest-label">最近站牌</span><strong class="map-nearest-name" id="map-nearest-name">—</strong>
                     <span class="map-nearest-distance" id="map-nearest-distance">—</span>
                 </div>
+                <section class="map-stop-routes-panel" id="map-stop-routes-panel" aria-label="站點途經路線" hidden>
+                    <header class="map-stop-routes-header"><div><span class="map-stop-routes-kicker" id="map-stop-routes-kicker">途經路線</span><strong class="map-stop-routes-name" id="map-stop-routes-name">—</strong></div><button type="button" class="map-stop-routes-close" onclick="app.hideMapStopRoutes()" aria-label="關閉途經路線">×</button></header>
+                    <div id="map-stop-routes-content"></div>
+                </section>
 
                 <div id="map-stop-list" style="flex: 1; overflow-y: auto; background: #fff; position: relative;"></div>
             </div>
@@ -1523,7 +1541,8 @@
                 nearestMapStop: null,
                 userLocation: null,
                 expandedNearbyStopId: null,
-                nearbyRouteRenderToken: 0
+                nearbyRouteRenderToken: 0,
+                mapStopRouteRenderToken: 0
             },
             
             cache: { ctbStopsDetail: {}, gmbStopsCoords: {} },
@@ -3372,6 +3391,62 @@
                 await Promise.all(workers);
             },
 
+            async loadMapStopRouteETAs(routes, token) {
+                let pointer = 0;
+                const workers = Array.from({ length:Math.min(4, routes.length) }, async () => {
+                    while (pointer < routes.length) {
+                        const index = pointer++;
+                        const slot = document.getElementById(`map-stop-route-eta-${token}-${index}`);
+                        try {
+                            const etas = await this.fetchNearbyRouteETAs(routes[index]);
+                            if (this.state.mapStopRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.innerHTML = this.formatNearbyETAs(etas); }
+                        } catch (error) {
+                            if (this.state.mapStopRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.innerHTML = '<div class="eta-row no-data">暫不可用</div>'; }
+                        }
+                    }
+                });
+                await Promise.all(workers);
+            },
+
+            hideMapStopRoutes() {
+                ++this.state.mapStopRouteRenderToken;
+                const panel = document.getElementById('map-stop-routes-panel');
+                if (panel) panel.hidden = true;
+            },
+
+            showMapStopRoutes(stopId) {
+                const stop = (this.state.currentMapStops || []).find(item => String(item.id) === String(stopId)) || this.state.stopList?.[stopId];
+                const panel = document.getElementById('map-stop-routes-panel');
+                const name = document.getElementById('map-stop-routes-name');
+                const kicker = document.getElementById('map-stop-routes-kicker');
+                const content = document.getElementById('map-stop-routes-content');
+                if (!panel || !content || !stop) return;
+                const routes = this.getRoutesForNearbyStop(stopId);
+                const token = ++this.state.mapStopRouteRenderToken;
+                if (name) name.textContent = stop.name || '未命名站牌';
+                if (kicker) kicker.textContent = routes.length ? `途經路線 · ${routes.length} 條` : '途經路線';
+                panel.hidden = false;
+                if (!routes.length) { content.innerHTML = '<div class="nearby-route-empty">暫未找到此站的途經巴士路線。</div>'; return; }
+                content.innerHTML = `<div class="nearby-route-panel"><div class="nearby-route-list">${routes.map((item, index) => { const style = this.getNearbyRouteStyle(item.operator); const fare = item.fare !== undefined && item.fare !== null && item.fare !== '' ? `<div class="fare-watermark">$${this.escapeNearbyHTML(String(item.fare).replace(/^\$/, ''))}</div>` : ''; return `<div class="route-card nearby-fav-route-card ${style.cardClass}"><div class="bus-left"><div class="route-badge ${style.badgeClass}">${this.escapeNearbyHTML(item.route)}</div><div class="route-info"><div class="destination">往 ${this.escapeNearbyHTML(item.destination)}</div></div></div>${fare}<div class="eta-list nearby-route-eta loading" id="map-stop-route-eta-${token}-${index}"><div class="eta-row eta-primary">…</div></div></div>`; }).join('')}</div></div>`;
+                content.querySelectorAll('.nearby-fav-route-card').forEach((card, index) => {
+                    card.setAttribute('role', 'button');
+                    card.tabIndex = 0;
+                    card.setAttribute('aria-label', `${routes[index].route} 往 ${routes[index].destination}：開啟完整路線地圖`);
+                    card.addEventListener('click', () => this.openMapRouteFromStopPanel(stopId, index));
+                    card.addEventListener('keydown', event => {
+                        if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); this.openMapRouteFromStopPanel(stopId, index); }
+                    });
+                });
+                this.loadMapStopRouteETAs(routes, token);
+            },
+
+            openMapRouteFromStopPanel(stopId, routeIndex) {
+                const item = this.getRoutesForNearbyStop(stopId)[Number(routeIndex)];
+                if (!item) return;
+                this.hideMapStopRoutes();
+                this.openMapModal(this.nearbyRouteContext(item));
+            },
+
             openNearbyStopRoutes(stopId) {
                 this.state.expandedNearbyStopId = String(this.state.expandedNearbyStopId) === String(stopId) ? null : String(stopId);
                 this.renderNearbyStops();
@@ -3585,6 +3660,7 @@
                 document.body.classList.add('map-open');
                 modal.style.display = 'flex'; mapContainer.style.display = 'none'; 
                 document.getElementById('map-route-card').hidden = true;
+                this.hideMapStopRoutes();
                 loading.innerText = '正在載入地圖引擎... ⏳';
                 loading.style.display = 'block';
 
@@ -3740,6 +3816,7 @@
                 document.body.classList.remove('map-open');
                 document.getElementById('map-route-card').hidden = true;
                 document.getElementById('map-location-status').hidden = true;
+                this.hideMapStopRoutes();
                 this.clearNearestMapStop();
                 if (this.state.gpsWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
                 this.state.isLocationRequesting = false;
@@ -3751,6 +3828,7 @@
                 const marker = this.state.routeMarkers[seq];
                 if (marker && this.state.routeMap && lat !== null && lng !== null) { this.state.routeMap.setView([lat, lng], 17, { animate: true }); marker.openPopup(); }
                 this.fetchStopETAInMap(seq, stopId); 
+                this.showMapStopRoutes(stopId);
             },
 
             selectStopInList(seq) {

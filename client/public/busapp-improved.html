@@ -1032,7 +1032,8 @@
         #map-stop-list .stop-list-container { padding:0 0 14px!important; background:transparent!important; }
         #map-stop-list .stop-item { margin:6px 0!important; padding:10px 8px!important; border:1px solid rgba(11,30,50,.13)!important; border-radius:8px!important; background:rgba(255,253,250,.95)!important; box-shadow:0 2px 0 rgba(11,30,50,.035)!important; }
         #map-stop-list .stop-item.selected { border-color:var(--eta-ink)!important; box-shadow:0 0 0 2px var(--eta-yellow), 0 5px 14px rgba(11,30,50,.12)!important; }
-        #map-stop-list .stop-seq { width:24px; height:24px; display:grid; place-content:center; color:var(--eta-ink)!important; background:var(--eta-yellow); border-radius:50%; font-size:10px!important; }
+        #map-stop-list .stop-seq { width:24px; height:24px; display:grid; place-content:center; color:var(--eta-ink)!important; background:var(--eta-yellow); border-radius:50%; font-size:10px!important; cursor:pointer; user-select:none; }
+        #map-stop-list .stop-seq:focus-visible { outline:3px solid var(--eta-ink); outline-offset:2px; }
         #map-stop-list .stop-name { font-family:var(--font-ui)!important; font-size:14px!important; font-weight:760!important; letter-spacing:-.02em; }
         #map-stop-list .stop-eta-container { min-width:52px; text-align:right; font-family:var(--font-data); }
         .destination { font-family:var(--font-ui)!important; font-weight:760!important; letter-spacing:-.025em!important; }
@@ -3752,7 +3753,7 @@
                             let latlng = [parseFloat(s.lat), parseFloat(s.lng)]; latlngs.push(latlng);
                             let markerHtml = isTarget ? `<div style="background-color:${primaryColor}; width:18px; height:18px; border-radius:50%; border:3px solid white; box-shadow: 0 0 6px rgba(0,0,0,0.5);"></div>` : `<div style="background-color:#fff; width:10px; height:10px; border-radius:50%; border:2px solid ${primaryColor};"></div>`;
                             let marker = L.marker(latlng, { icon: L.divIcon({ className: 'custom-div-icon', html: markerHtml, iconSize: isTarget?[18, 18]:[10, 10], iconAnchor: isTarget?[9, 9]:[5, 5] }), zIndexOffset: isTarget ? 1000 : 0 }).bindPopup(`<b style="font-size:14px; color:#111;">${s.seq}. ${s.name}</b>`);
-                            marker.on('click', () => { this.clickStopInList(s.seq, s.lat, s.lng, s.id); });
+                            marker.on('click', () => { this.clickStopInList(s.seq, s.lat, s.lng, s.id, true); });
                             marker.addTo(this.state.routeMap); this.state.routeMarkers[s.seq] = marker; if (isTarget) targetMarker = marker;
                         }
 
@@ -3763,11 +3764,11 @@
                         const mFareVal = Array.isArray(mapFareArr) && mapFareArr[idx] ? mapFareArr[idx] : '';
 
                         listHtml += `
-                            <div class="stop-item ${isTarget ? 'selected' : ''}" id="stop-item-${s.seq}" onclick="app.clickStopInList(${s.seq}, ${s.lat ? s.lat : 'null'}, ${s.lng ? s.lng : 'null'}, '${s.id}')">
+                            <div class="stop-item ${isTarget ? 'selected' : ''}" id="stop-item-${s.seq}" onclick="app.clickStopInList(${s.seq}, ${s.lat ? s.lat : 'null'}, ${s.lng ? s.lng : 'null'}, '${s.id}', false)">
                                 <div class="stop-dot"></div>
                                 <div class="stop-info">
                                     <div class="stop-text-content">
-                                        <div class="stop-title-wrap" style="display:flex; align-items:center; width:100%;"><div class="stop-seq">${s.seq}</div><div class="stop-name" style="flex:1;">${s.name}</div></div>
+                                        <div class="stop-title-wrap" style="display:flex; align-items:center; width:100%;"><div class="stop-seq" role="button" tabindex="0" title="點擊查看途經路線" onclick="event.stopPropagation(); app.clickStopInList(${s.seq}, ${s.lat ? s.lat : 'null'}, ${s.lng ? s.lng : 'null'}, '${s.id}', true)" onkeydown="if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); event.stopPropagation(); app.clickStopInList(${s.seq}, ${s.lat ? s.lat : 'null'}, ${s.lng ? s.lng : 'null'}, '${s.id}', true); }">${s.seq}</div><div class="stop-name" style="flex:1;">${s.name}</div></div>
                                         <div style="display:flex; align-items:center; gap:6px;">
                                             <div class="stop-eta-container" id="map-eta-${s.seq}"></div>
                                             ${mFareVal ? `<span id="map-fare-${s.seq}" style="font-size:13px; color:${this.getFareColor(operator)}; font-weight:700; white-space:nowrap;">$${mFareVal}</span>` : ''}
@@ -3823,12 +3824,13 @@
                 document.getElementById('map-gps-btn').classList.remove('requesting', 'tracking');
             },
             
-            clickStopInList(seq, lat, lng, stopId) {
+            clickStopInList(seq, lat, lng, stopId, showRoutes = false) {
                 this.selectStopInList(seq);
                 const marker = this.state.routeMarkers[seq];
                 if (marker && this.state.routeMap && lat !== null && lng !== null) { this.state.routeMap.setView([lat, lng], 17, { animate: true }); marker.openPopup(); }
-                this.fetchStopETAInMap(seq, stopId); 
-                this.showMapStopRoutes(stopId);
+                this.fetchStopETAInMap(seq, stopId);
+                if (showRoutes) this.showMapStopRoutes(stopId);
+                else this.hideMapStopRoutes();
             },
 
             selectStopInList(seq) {

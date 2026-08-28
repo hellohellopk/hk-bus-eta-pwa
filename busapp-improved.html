@@ -1235,15 +1235,29 @@
         .nearby-meta { margin-top:4px; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:11px; font-weight:650; line-height:1.45; }
         .nearby-locate-btn { flex:0 0 auto; min-height:42px; padding:8px 10px; color:var(--eta-ink); border:1px solid var(--eta-ink); border-radius:3px; background:var(--eta-yellow); font-family:var(--font-data, monospace); font-size:10px; font-weight:900; cursor:pointer; box-shadow:2px 2px 0 rgba(11,30,50,.20); }
         .nearby-list { display:grid; gap:7px; }
-        .nearby-stop { display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:10px; padding:11px 12px; border:1px solid var(--eta-line); border-radius:5px; background:rgba(255,253,250,.94); box-shadow:0 2px 0 rgba(11,30,50,.035); }
+        .nearby-stop { display:grid; grid-template-columns:36px minmax(0,1fr) auto auto; align-items:center; gap:10px; width:100%; padding:11px 12px; color:inherit; border:1px solid var(--eta-line); border-radius:5px; background:rgba(255,253,250,.94); box-shadow:0 2px 0 rgba(11,30,50,.035); text-align:left; cursor:pointer; }
+        .nearby-stop:active { transform:translateY(1px); }
+        .nearby-stop.is-expanded { border-color:var(--eta-ink); border-bottom-color:transparent; border-radius:5px 5px 0 0; box-shadow:none; }
         .nearby-stop.is-closest { border:2px solid var(--eta-ink); background:#fffdf0; box-shadow:0 0 0 3px rgba(254,219,0,.55), 4px 4px 0 rgba(11,30,50,.13); }
         .nearby-rank { display:grid; width:32px; height:32px; place-items:center; color:var(--eta-ink); border-radius:50%; background:#e7e9e8; font-family:var(--font-data, monospace); font-size:12px; font-weight:900; }
         .nearby-stop.is-closest .nearby-rank { background:var(--eta-yellow); box-shadow:0 0 0 2px var(--eta-ink); }
         .nearby-name { overflow:hidden; color:var(--eta-ink); font-family:var(--font-ui); font-size:15px; font-weight:800; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }
         .nearby-stop-id { margin-top:2px; color:var(--eta-ink-soft); font-family:var(--font-data, monospace); font-size:10px; font-weight:700; }
         .nearby-distance { color:#b62d3e; font-family:var(--font-data, monospace); font-size:13px; font-weight:900; white-space:nowrap; }
+        .nearby-toggle { width:15px; height:15px; color:var(--eta-ink-soft); transition:transform .16s cubic-bezier(.23,1,.32,1); }
+        .nearby-stop.is-expanded .nearby-toggle { transform:rotate(180deg); }
+        .nearby-route-panel { margin:0 0 8px; padding:10px; border:1px solid var(--eta-ink); border-top:0; border-radius:0 0 5px 5px; background:#f7f4ed; box-shadow:3px 3px 0 rgba(254,219,0,.36); }
+        .nearby-route-panel-title { margin:0 0 8px; color:var(--eta-ink-soft); font-family:var(--font-data, monospace); font-size:10px; font-weight:900; letter-spacing:.08em; }
+        .nearby-route-list { display:grid; gap:5px; }
+        .nearby-route-row { display:grid; grid-template-columns:46px minmax(0,1fr) auto; align-items:center; gap:8px; min-height:44px; padding:6px 7px; border:1px solid rgba(11,30,50,.15); background:#fffdf9; }
+        .nearby-route-badge { display:grid; min-width:42px; min-height:27px; place-items:center; padding:1px 4px; color:#fff; background:var(--route-color, var(--eta-ink)); font-family:var(--font-data, monospace); font-size:16px; font-weight:900; line-height:1; }
+        .nearby-route-dest { overflow:hidden; color:var(--eta-ink); font-family:var(--font-ui); font-size:12px; font-weight:780; line-height:1.25; text-overflow:ellipsis; white-space:nowrap; }
+        .nearby-route-operator { margin-top:2px; color:var(--eta-ink-soft); font-family:var(--font-data, monospace); font-size:9px; font-weight:800; }
+        .nearby-route-eta { min-width:52px; color:#b62d3e; font-family:var(--font-data, monospace); font-size:11px; font-weight:900; text-align:right; white-space:nowrap; }
+        .nearby-route-eta.loading { color:var(--eta-ink-soft); font-size:10px; }
+        .nearby-route-empty { padding:14px 8px; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:12px; font-weight:650; text-align:center; }
         .nearby-empty { margin-top:18px; padding:30px 18px; color:var(--eta-ink-soft); border:1px dashed var(--eta-line); background:rgba(255,253,250,.72); text-align:center; font-family:var(--font-ui); font-size:14px; font-weight:650; line-height:1.65; }
-        @media (max-width:520px) { .nearby-intro { padding:11px 10px; } .nearby-intro strong { font-size:16px; } .nearby-stop { grid-template-columns:32px minmax(0,1fr) auto; gap:8px; padding:10px 9px; } .nearby-name { font-size:14px; } .nearby-distance { font-size:12px; } }
+        @media (max-width:520px) { .nearby-intro { padding:11px 10px; } .nearby-intro strong { font-size:16px; } .nearby-stop { grid-template-columns:32px minmax(0,1fr) auto auto; gap:7px; padding:10px 9px; } .nearby-name { font-size:14px; } .nearby-distance { font-size:12px; } .nearby-route-panel { padding:8px; } .nearby-route-row { grid-template-columns:43px minmax(0,1fr) 47px; gap:6px; padding:6px; } .nearby-route-badge { min-width:38px; font-size:14px; } }
     </style>
 </head>
 <body>
@@ -1488,7 +1502,9 @@
                 locationPermission: 'unknown',
                 locationStatusTimer: null,
                 nearestMapStop: null,
-                userLocation: null
+                userLocation: null,
+                expandedNearbyStopId: null,
+                nearbyRouteRenderToken: 0
             },
             
             cache: { ctbStopsDetail: {}, gmbStopsCoords: {} },
@@ -3219,6 +3235,124 @@
                 );
             },
 
+            getRoutesForNearbyStop(stopId) {
+                const operatorOrder = ['kmb', 'ctb', 'nlb', 'gmb', 'lightRail', 'lrtfeeder'];
+                const seen = new Set();
+                const matched = [];
+                Object.entries(this.state.routeList || {}).forEach(([routeKey, entry]) => {
+                    (entry.co || []).forEach(rawOperator => {
+                        const operator = this.normalizeOperator(rawOperator);
+                        const stopIds = entry.stops?.[rawOperator] || entry.stops?.[operator] || [];
+                        if (!Array.isArray(stopIds) || !stopIds.some(id => String(id) === String(stopId))) return;
+                        const key = `${operator}|${entry.route}|${entry.dest?.zh || entry.dest?.en || ''}`;
+                        if (seen.has(key)) return;
+                        seen.add(key);
+                        matched.push({
+                            routeKey, route: String(entry.route || '—'), operator,
+                            destination: entry.dest?.zh || entry.dest?.en || '未提供目的地',
+                            bound: entry.bound?.[rawOperator] || entry.bound?.[operator] || 'O',
+                            nlbRouteId: entry.nlbId || entry.nlb_routeId || null,
+                            stopId: String(stopId)
+                        });
+                    });
+                });
+                return matched.sort((a, b) => (operatorOrder.indexOf(a.operator) - operatorOrder.indexOf(b.operator)) || a.route.localeCompare(b.route, 'zh-HK', { numeric:true }) || a.destination.localeCompare(b.destination, 'zh-HK'));
+            },
+
+            getNearbyOperatorLabel(operator) {
+                return ({ kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lightRail:'輕鐵', lrtfeeder:'港鐵巴士' })[this.normalizeOperator(operator)] || '巴士';
+            },
+
+            escapeNearbyHTML(value) {
+                return String(value ?? '').replace(/[&<>'"]/g, char => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', "'":'&#39;', '"':'&quot;' })[char]);
+            },
+
+            nearbyRouteContext(item) {
+                const base = { route:item.route, routeKey:item.routeKey, operators:[item.operator], destinations:item.destination, dest:item.destination, bound:item.bound, dir:item.bound };
+                if (item.operator === 'kmb') { base.kmb_stop = item.stopId; base.kmb_dir = item.bound; }
+                if (item.operator === 'ctb') { base.ctb_stop = item.stopId; base.ctb_dir = item.bound; }
+                if (item.operator === 'nlb') { base.nlb_stopId = item.stopId; base.nlb_routeId = item.nlbRouteId; }
+                if (item.operator === 'gmb') { base.gmb_stopId = item.stopId; }
+                if (item.operator === 'lightRail') { base.lightRail_stop = item.stopId; base.lightRail_dest = item.destination; }
+                if (item.operator === 'lrtfeeder') { base.lrtfeeder_stop = item.stopId; }
+                return base;
+            },
+
+            async fetchNearbyRouteETAs(item) {
+                const route = this.nearbyRouteContext(item);
+                const op = item.operator;
+                let allETA = [];
+                if (op === 'kmb') {
+                    const response = await this.fetchJSON(`https://data.etabus.gov.hk/v1/transport/kmb/eta/${route.kmb_stop}/${route.route}/1`);
+                    allETA = (response?.data || []).filter(bus => bus.dir === route.kmb_dir).map(bus => ({ eta:bus.eta }));
+                } else if (op === 'ctb') {
+                    const response = await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/citybus/eta/CTB/${route.ctb_stop}/${route.route}`);
+                    allETA = (response?.data || []).filter(bus => bus.dir === route.ctb_dir).map(bus => ({ eta:bus.eta }));
+                } else if (op === 'nlb') {
+                    const routeId = await this.resolveNlbEtaRouteId(route);
+                    const response = routeId ? await this.fetchJSON(`https://rt.data.gov.hk/v2/transport/nlb/stop.php?action=estimatedArrivals&routeId=${routeId}&stopId=${route.nlb_stopId}`) : null;
+                    allETA = (response?.estimatedArrivals || []).filter(item => item.estimatedArrivalTime).map(item => ({ eta:item.estimatedArrivalTime }));
+                } else if (op === 'gmb') {
+                    for (const region of ['HKI', 'KLN', 'NT']) {
+                        const detail = await this.fetchJSON(`https://data.etagmb.gov.hk/route/${region}/${route.route}`);
+                        if (!detail?.data?.length) continue;
+                        const routeMeta = detail.data[0];
+                        const direction = routeMeta.directions?.find(entry => route.destinations && entry.dest_tc?.includes(route.destinations.slice(0, 4))) || routeMeta.directions?.[0];
+                        route.gmb_routeId = routeMeta.route_id; route.gmb_routeSeq = direction?.route_seq || 1;
+                        break;
+                    }
+                    const response = route.gmb_routeId ? await this.fetchJSON(`https://data.etagmb.gov.hk/eta/route-stop/${route.gmb_routeId}/${route.gmb_stopId}`) : null;
+                    const direction = (response?.data || []).find(entry => String(entry.route_seq) === String(route.gmb_routeSeq));
+                    allETA = (direction?.eta || []).filter(entry => entry.timestamp).map(entry => ({ eta:entry.timestamp }));
+                } else if (op === 'lightRail') {
+                    const stationId = String(route.lightRail_stop).replace(/^LR/i, '');
+                    const response = await this.fetchJSON(`https://rt.data.gov.hk/v1/transport/mtr/lrt/getSchedule?station_id=${stationId}&with_special=1`);
+                    (response?.platform_list || []).forEach(platform => (platform.route_list || []).filter(entry => String(entry.route_no) === route.route && Number(entry.stop) === 0).forEach(entry => {
+                        const minutes = Number.parseInt(entry.time_en, 10); if (Number.isFinite(minutes)) allETA.push({ eta:new Date(Date.now() + minutes * 60000).toISOString() });
+                    }));
+                } else if (op === 'lrtfeeder') {
+                    const response = await this.fetchJSON('https://rt.data.gov.hk/v1/transport/mtr/bus/getSchedule', { method:'POST', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ language:'zh', routeName:route.route }) });
+                    const station = (response?.busStop || []).find(entry => String(entry.busStopId) === String(route.lrtfeeder_stop));
+                    (station?.bus || []).forEach(bus => { const seconds = Number(bus.arrivalTimeInSecond); if (Number.isFinite(seconds)) allETA.push({ eta:new Date(Date.now() + seconds * 1000).toISOString() }); });
+                }
+                return this.formatETAs(allETA.sort((a, b) => new Date(String(a.eta).replace(' ', 'T')) - new Date(String(b.eta).replace(' ', 'T'))));
+            },
+
+            formatNearbyETAs(etas) {
+                if (!etas?.length) return '暫無班次';
+                return etas.map(eta => eta.min === 0 ? '就到' : `${eta.min} 分`).join(' · ');
+            },
+
+            async loadNearbyRouteETAs(routes, token) {
+                let pointer = 0;
+                const workers = Array.from({ length:Math.min(4, routes.length) }, async () => {
+                    while (pointer < routes.length) {
+                        const index = pointer++;
+                        const slot = document.getElementById(`nearby-route-eta-${token}-${index}`);
+                        try {
+                            const etas = await this.fetchNearbyRouteETAs(routes[index]);
+                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.textContent = this.formatNearbyETAs(etas); }
+                        } catch (error) {
+                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.textContent = '暫不可用'; }
+                        }
+                    }
+                });
+                await Promise.all(workers);
+            },
+
+            openNearbyStopRoutes(stopId) {
+                this.state.expandedNearbyStopId = String(this.state.expandedNearbyStopId) === String(stopId) ? null : String(stopId);
+                this.renderNearbyStops();
+                if (this.state.expandedNearbyStopId === null) return;
+                const routes = this.getRoutesForNearbyStop(stopId);
+                const token = ++this.state.nearbyRouteRenderToken;
+                const panel = document.getElementById(`nearby-routes-${stopId}`);
+                if (!panel) return;
+                if (!routes.length) { panel.innerHTML = '<div class="nearby-route-empty">暫未找到此站的途經巴士路線。</div>'; return; }
+                panel.innerHTML = `<div class="nearby-route-panel-title">途經路線 · ${routes.length} 條</div><div class="nearby-route-list">${routes.map((item, index) => `<div class="nearby-route-row"><span class="nearby-route-badge" style="--route-color:${this.getPrimaryColor(item.operator)}">${this.escapeNearbyHTML(item.route)}</span><div><div class="nearby-route-dest">往 ${this.escapeNearbyHTML(item.destination)}</div><div class="nearby-route-operator">${this.getNearbyOperatorLabel(item.operator)}</div></div><span class="nearby-route-eta loading" id="nearby-route-eta-${token}-${index}">載入 ETA…</span></div>`).join('')}</div>`;
+                this.loadNearbyRouteETAs(routes, token);
+            },
+
             renderNearbyStops() {
                 const container = document.getElementById('nearby-results');
                 if (!container || this.state.currentTab !== 'nearby') return;
@@ -3244,7 +3378,7 @@
                     return;
                 }
                 const time = new Date(location.updatedAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' });
-                container.innerHTML = `<div class="nearby-intro"><div><span class="nearby-eyebrow">YOUR LOCATION · ${time}</span><strong>最近車站</strong><div class="nearby-meta">按直線距離排序，首個站牌為目前最近。</div></div><button type="button" class="nearby-locate-btn" onclick="app.requestNearbyLocation()">更新位置</button></div><div class="nearby-list">${nearby.map((stop, index) => `<div class="nearby-stop ${index === 0 ? 'is-closest' : ''}"><span class="nearby-rank">${index + 1}</span><div><div class="nearby-name">${stop.name}</div><div class="nearby-stop-id">${stop.id}</div></div><strong class="nearby-distance">${this.formatDistance(stop.meters)}</strong></div>`).join('')}</div>`;
+                container.innerHTML = `<div class="nearby-intro"><div><span class="nearby-eyebrow">YOUR LOCATION · ${time}</span><strong>最近車站</strong><div class="nearby-meta">點擊站牌，即可查看所有途經路線與 ETA。</div></div><button type="button" class="nearby-locate-btn" onclick="app.requestNearbyLocation()">更新位置</button></div><div class="nearby-list">${nearby.map((stop, index) => { const expanded = String(this.state.expandedNearbyStopId) === String(stop.id); return `<div class="nearby-stop-wrap"><button type="button" class="nearby-stop ${index === 0 ? 'is-closest' : ''} ${expanded ? 'is-expanded' : ''}" data-stop-id="${this.escapeNearbyHTML(stop.id)}" aria-expanded="${expanded}" onclick="app.openNearbyStopRoutes(this.dataset.stopId)"><span class="nearby-rank">${index + 1}</span><span><span class="nearby-name">${this.escapeNearbyHTML(stop.name)}</span><span class="nearby-stop-id">${this.escapeNearbyHTML(stop.id)}</span></span><strong class="nearby-distance">${this.formatDistance(stop.meters)}</strong><svg class="nearby-toggle" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 6 5 5 5-5"/></svg></button>${expanded ? `<div class="nearby-route-panel" id="nearby-routes-${this.escapeNearbyHTML(stop.id)}"><div class="nearby-route-empty">正在整理此站途經路線…</div></div>` : ''}</div>`; }).join('')}</div>`;
             },
 
             distanceInMeters(lat1, lng1, lat2, lng2) {

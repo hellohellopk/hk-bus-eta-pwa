@@ -1211,6 +1211,39 @@
         .map-location-status.is-success { background:#145a3d; }
         .map-location-status[hidden] { display:none; }
         @media (max-width:520px) { .map-location-status { right:16px; bottom:calc(max(16px, env(safe-area-inset-bottom)) + 56px); max-width:190px; } }
+        .map-nearest-card {
+            position:fixed; top:calc(env(safe-area-inset-top) + 132px); left:calc(50% - min(50vw, 380px) + 68px); z-index:2300;
+            max-width:242px; display:grid; grid-template-columns:auto minmax(0,1fr); align-items:center; gap:3px 8px;
+            padding:8px 10px; color:#fff; background:#101820; border-left:4px solid var(--eta-yellow, #fedb00);
+            border-radius:4px; box-shadow:0 5px 16px rgba(0,0,0,.30); font-family:var(--font-ui); pointer-events:none;
+        }
+        .map-nearest-card[hidden] { display:none; }
+        .map-nearest-label { color:var(--eta-yellow, #fedb00); font-family:var(--font-data, monospace); font-size:9px; font-weight:900; letter-spacing:.1em; white-space:nowrap; }
+        .map-nearest-name { overflow:hidden; color:#fff; font-size:13px; font-weight:850; letter-spacing:-.02em; text-overflow:ellipsis; white-space:nowrap; }
+        .map-nearest-distance { grid-column:2; color:rgba(255,255,255,.74); font-family:var(--font-data, monospace); font-size:11px; font-weight:800; }
+        #map-stop-list .stop-item.nearest-stop { border:2px solid var(--eta-yellow)!important; background:#fffdf1!important; box-shadow:0 0 0 2px rgba(254,219,0,.24), 0 5px 14px rgba(11,30,50,.12)!important; }
+        #map-stop-list .stop-item.nearest-stop .stop-seq { color:var(--eta-ink)!important; background:var(--eta-yellow)!important; box-shadow:0 0 0 2px var(--eta-ink); }
+        .nearest-stop-badge { display:inline-flex; align-items:center; margin-left:7px; padding:2px 5px; color:var(--eta-ink); background:var(--eta-yellow); border:1px solid rgba(11,30,50,.34); border-radius:3px; font-family:var(--font-data, monospace); font-size:9px; font-weight:900; letter-spacing:.03em; line-height:1.15; vertical-align:2px; white-space:nowrap; }
+        .custom-div-icon.nearest-stop-marker { z-index:1400!important; overflow:visible!important; }
+        .custom-div-icon.nearest-stop-marker > div { position:relative; transform:scale(1.45); box-shadow:0 0 0 4px var(--eta-yellow), 0 0 0 7px rgba(11,30,50,.52)!important; }
+        @media (max-width:520px) { .map-nearest-card { top:calc(env(safe-area-inset-top) + 122px); left:calc(50% - 50vw + 62px); max-width:210px; } .map-nearest-name { font-size:12px; } }
+        /* Nearby tab reminder — station-paper directory: rank real stops by distance with the nearest one unmistakably first. */
+        #view-nearby { max-width:620px; }
+        .nearby-intro { display:flex; align-items:flex-start; justify-content:space-between; gap:12px; margin:0 0 12px; padding:13px 14px; color:var(--eta-ink); border:1px solid var(--eta-ink); border-left:6px solid var(--eta-yellow); background:rgba(255,253,250,.94); box-shadow:4px 4px 0 rgba(254,219,0,.42); }
+        .nearby-eyebrow { display:block; margin-bottom:3px; color:var(--eta-ink-soft); font-family:var(--font-data, monospace); font-size:9px; font-weight:900; letter-spacing:.11em; }
+        .nearby-intro strong { display:block; font-family:var(--font-ui); font-size:17px; font-weight:850; letter-spacing:-.035em; }
+        .nearby-meta { margin-top:4px; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:11px; font-weight:650; line-height:1.45; }
+        .nearby-locate-btn { flex:0 0 auto; min-height:42px; padding:8px 10px; color:var(--eta-ink); border:1px solid var(--eta-ink); border-radius:3px; background:var(--eta-yellow); font-family:var(--font-data, monospace); font-size:10px; font-weight:900; cursor:pointer; box-shadow:2px 2px 0 rgba(11,30,50,.20); }
+        .nearby-list { display:grid; gap:7px; }
+        .nearby-stop { display:grid; grid-template-columns:36px minmax(0,1fr) auto; align-items:center; gap:10px; padding:11px 12px; border:1px solid var(--eta-line); border-radius:5px; background:rgba(255,253,250,.94); box-shadow:0 2px 0 rgba(11,30,50,.035); }
+        .nearby-stop.is-closest { border:2px solid var(--eta-ink); background:#fffdf0; box-shadow:0 0 0 3px rgba(254,219,0,.55), 4px 4px 0 rgba(11,30,50,.13); }
+        .nearby-rank { display:grid; width:32px; height:32px; place-items:center; color:var(--eta-ink); border-radius:50%; background:#e7e9e8; font-family:var(--font-data, monospace); font-size:12px; font-weight:900; }
+        .nearby-stop.is-closest .nearby-rank { background:var(--eta-yellow); box-shadow:0 0 0 2px var(--eta-ink); }
+        .nearby-name { overflow:hidden; color:var(--eta-ink); font-family:var(--font-ui); font-size:15px; font-weight:800; letter-spacing:-.025em; text-overflow:ellipsis; white-space:nowrap; }
+        .nearby-stop-id { margin-top:2px; color:var(--eta-ink-soft); font-family:var(--font-data, monospace); font-size:10px; font-weight:700; }
+        .nearby-distance { color:#b62d3e; font-family:var(--font-data, monospace); font-size:13px; font-weight:900; white-space:nowrap; }
+        .nearby-empty { margin-top:18px; padding:30px 18px; color:var(--eta-ink-soft); border:1px dashed var(--eta-line); background:rgba(255,253,250,.72); text-align:center; font-family:var(--font-ui); font-size:14px; font-weight:650; line-height:1.65; }
+        @media (max-width:520px) { .nearby-intro { padding:11px 10px; } .nearby-intro strong { font-size:16px; } .nearby-stop { grid-template-columns:32px minmax(0,1fr) auto; gap:8px; padding:10px 9px; } .nearby-name { font-size:14px; } .nearby-distance { font-size:12px; } }
     </style>
 </head>
 <body>
@@ -1237,6 +1270,10 @@
             <div class="nav-item" id="nav-planner" onclick="app.switchTab('planner')" style="flex:none;padding:4px 10px;flex-direction:row;gap:5px;height:auto;font-size:12px;margin-bottom:0;">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg>
                 規劃
+            </div>
+            <div class="nav-item" id="nav-nearby" onclick="app.switchTab('nearby')" title="最近車站" style="flex:none;padding:4px 10px;flex-direction:row;gap:5px;height:auto;font-size:12px;margin-bottom:0;">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" width="15" height="15"><path d="M12 21s7-5.42 7-12a7 7 0 0 0-14 0c0 6.58 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg>
+                最近
             </div>
         </div>
         <!-- Icons right -->
@@ -1293,7 +1330,14 @@
         </div>
     </div>
 
-    <!-- 底部導航列 (極簡雙按鈕) -->
+    <!-- 視圖 3：定位後的最近車站 -->
+    <div id="view-nearby" class="view-section">
+        <div id="nearby-results" aria-live="polite">
+            <div class="nearby-empty">正在準備最近車站…</div>
+        </div>
+    </div>
+
+    <!-- 視圖 4：行程規劃 -->
     <div id="view-planner" class="view-section">
             <div style="padding:4px 0 12px 0;">
                 <div id="planner-sync-status" style="font-size:11px;color:#8e8e93;margin-bottom:4px;display:none;"></div>
@@ -1354,6 +1398,10 @@
                     <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg>
                 </button>
                 <div class="map-location-status" id="map-location-status" role="status" aria-live="polite" hidden></div>
+                <div class="map-nearest-card" id="map-nearest-card" role="status" aria-live="polite" hidden>
+                    <span class="map-nearest-label">最近站牌</span><strong class="map-nearest-name" id="map-nearest-name">—</strong>
+                    <span class="map-nearest-distance" id="map-nearest-distance">—</span>
+                </div>
 
                 <div id="map-stop-list" style="flex: 1; overflow-y: auto; background: #fff; position: relative;"></div>
             </div>
@@ -1438,7 +1486,9 @@
                 userLocationMarker: null,
                 isLocationRequesting: false,
                 locationPermission: 'unknown',
-                locationStatusTimer: null
+                locationStatusTimer: null,
+                nearestMapStop: null,
+                userLocation: null
             },
             
             cache: { ctbStopsDetail: {}, gmbStopsCoords: {} },
@@ -1923,18 +1973,27 @@
                 document.getElementById(`nav-${tabId}`).classList.add('active');
                 const editBtn = document.getElementById('edit-btn');
                 const refreshBtn = document.getElementById('refresh-btn');
+                const headerText = document.getElementById('header-text');
 
                 if (tabId === 'favourites') {
-                    headerText.textContent = '⭐ 收藏路線';
+                    if (headerText) headerText.textContent = '⭐ 收藏路線';
                     editBtn.style.display = 'flex'; refreshBtn.style.display = 'flex';
                     this.manualRefresh();
                 } else if (tabId === 'planner') {
-                    headerText.textContent = '規劃';
+                    if (headerText) headerText.textContent = '規劃';
                     editBtn.style.display = 'none'; refreshBtn.style.display = 'none';
                     setTimeout(() => this.loadHKBusData(), 300);
 
+                } else if (tabId === 'nearby') {
+                    if (headerText) headerText.textContent = '最近車站';
+                    editBtn.style.display = 'none'; refreshBtn.style.display = 'none';
+                    this.renderNearbyStops();
+                    this.loadHKBusData().then(() => {
+                        if (this.state.userLocation) this.renderNearbyStops();
+                        else this.requestNearbyLocation();
+                    });
                 } else if (tabId === 'routes') {
-                    headerText.textContent = '🔍 路線搜尋';
+                    if (headerText) headerText.textContent = '🔍 路線搜尋';
                     editBtn.style.display = 'none'; refreshBtn.style.display = 'none';
                     
                     this.loadHKBusData();
@@ -3128,6 +3187,8 @@
             },
 
             updateUserLocation(lat, lng) {
+                this.state.userLocation = { lat, lng, updatedAt: Date.now() };
+                if (this.state.currentTab === 'nearby') this.renderNearbyStops();
                 if (!this.state.routeMap) return;
                 if (!this.state.userLocationMarker) {
                     this.state.userLocationMarker = L.circleMarker([lat, lng], {
@@ -3137,6 +3198,121 @@
                     this.state.userLocationMarker.setLatLng([lat, lng]);
                 }
                 this.state.routeMap.setView([lat, lng], 17);
+                this.updateNearestMapStop(lat, lng);
+            },
+
+            async requestNearbyLocation() {
+                const container = document.getElementById('nearby-results');
+                if (!container || this.state.currentTab !== 'nearby') return;
+                if (!navigator.geolocation) {
+                    container.innerHTML = '<div class="nearby-empty">此裝置或瀏覽器不支援定位功能。</div>';
+                    return;
+                }
+                container.innerHTML = '<div class="nearby-empty">請在瀏覽器提示中允許使用目前位置。<br><span style="font-size:12px">位置只會在本機用作距離計算。</span></div>';
+                navigator.geolocation.getCurrentPosition(
+                    position => this.updateUserLocation(position.coords.latitude, position.coords.longitude),
+                    error => {
+                        const retry = error?.code === 1 ? '請在瀏覽器設定允許位置後，再按一次下方按鈕。' : '請確認 GPS 或網絡連線後，再試一次。';
+                        container.innerHTML = `<div class="nearby-empty">${this.locationErrorMessage(error)}<br><button type="button" class="nearby-locate-btn" style="margin-top:12px" onclick="app.requestNearbyLocation()">使用目前位置</button><br><span style="font-size:12px">${retry}</span></div>`;
+                    },
+                    { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
+                );
+            },
+
+            renderNearbyStops() {
+                const container = document.getElementById('nearby-results');
+                if (!container || this.state.currentTab !== 'nearby') return;
+                const location = this.state.userLocation;
+                if (!location) {
+                    container.innerHTML = '<div class="nearby-empty">請允許定位後，即可按距離列出附近巴士站牌。<br><button type="button" class="nearby-locate-btn" style="margin-top:12px" onclick="app.requestNearbyLocation()">使用目前位置</button></div>';
+                    return;
+                }
+                const uniqueStops = new Map();
+                Object.entries(this.state.stopList || {}).forEach(([id, stop]) => {
+                    const lat = Number(stop.location?.lat ?? stop.lat);
+                    const lng = Number(stop.location?.lng ?? stop.lng);
+                    if (!Number.isFinite(lat) || !Number.isFinite(lng)) return;
+                    const name = stop.name?.zh || stop.name?.en || '未命名站牌';
+                    const meters = this.distanceInMeters(location.lat, location.lng, lat, lng);
+                    const uniqueKey = `${name}|${lat.toFixed(5)}|${lng.toFixed(5)}`;
+                    const candidate = { id, name, lat, lng, meters };
+                    if (!uniqueStops.has(uniqueKey) || uniqueStops.get(uniqueKey).meters > meters) uniqueStops.set(uniqueKey, candidate);
+                });
+                const nearby = [...uniqueStops.values()].sort((a, b) => a.meters - b.meters).slice(0, 12);
+                if (!nearby.length) {
+                    container.innerHTML = '<div class="nearby-empty">未能在本機資料找到具有座標的站牌，請稍後再試。</div>';
+                    return;
+                }
+                const time = new Date(location.updatedAt).toLocaleTimeString('zh-HK', { hour: '2-digit', minute: '2-digit' });
+                container.innerHTML = `<div class="nearby-intro"><div><span class="nearby-eyebrow">YOUR LOCATION · ${time}</span><strong>最近車站</strong><div class="nearby-meta">按直線距離排序，首個站牌為目前最近。</div></div><button type="button" class="nearby-locate-btn" onclick="app.requestNearbyLocation()">更新位置</button></div><div class="nearby-list">${nearby.map((stop, index) => `<div class="nearby-stop ${index === 0 ? 'is-closest' : ''}"><span class="nearby-rank">${index + 1}</span><div><div class="nearby-name">${stop.name}</div><div class="nearby-stop-id">${stop.id}</div></div><strong class="nearby-distance">${this.formatDistance(stop.meters)}</strong></div>`).join('')}</div>`;
+            },
+
+            distanceInMeters(lat1, lng1, lat2, lng2) {
+                const radians = value => value * Math.PI / 180;
+                const earthRadius = 6371000;
+                const deltaLat = radians(lat2 - lat1);
+                const deltaLng = radians(lng2 - lng1);
+                const a = Math.sin(deltaLat / 2) ** 2 + Math.cos(radians(lat1)) * Math.cos(radians(lat2)) * Math.sin(deltaLng / 2) ** 2;
+                return earthRadius * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+            },
+
+            formatDistance(meters) {
+                if (!Number.isFinite(meters)) return '距離未能計算';
+                return meters < 1000 ? `約 ${Math.max(1, Math.round(meters))} 米` : `約 ${(meters / 1000).toFixed(1)} 公里`;
+            },
+
+            clearNearestMapStop() {
+                const previous = this.state.nearestMapStop;
+                if (previous?.seq !== undefined) {
+                    this.state.routeMarkers?.[previous.seq]?.getElement?.().classList.remove('nearest-stop-marker');
+                    const previousRow = document.getElementById(`stop-item-${previous.seq}`);
+                    previousRow?.classList.remove('nearest-stop');
+                    previousRow?.querySelector('.nearest-stop-badge')?.remove();
+                }
+                this.state.nearestMapStop = null;
+                const card = document.getElementById('map-nearest-card');
+                if (card) card.hidden = true;
+            },
+
+            updateNearestMapStop(userLat, userLng) {
+                const candidates = (this.state.currentMapStops || []).filter(stop => Number.isFinite(Number(stop.lat)) && Number.isFinite(Number(stop.lng)));
+                if (!candidates.length) { this.clearNearestMapStop(); return; }
+                let closest = null;
+                candidates.forEach(stop => {
+                    const meters = this.distanceInMeters(userLat, userLng, Number(stop.lat), Number(stop.lng));
+                    if (!closest || meters < closest.meters) closest = { stop, meters };
+                });
+                if (!closest) return;
+
+                const previous = this.state.nearestMapStop;
+                if (previous?.seq !== closest.stop.seq) this.clearNearestMapStop();
+                this.state.nearestMapStop = { ...closest.stop, meters: closest.meters };
+
+                const distance = this.formatDistance(closest.meters);
+                const markerElement = this.state.routeMarkers?.[closest.stop.seq]?.getElement?.();
+                markerElement?.classList.add('nearest-stop-marker');
+                this.state.routeMarkers?.[closest.stop.seq]?.setZIndexOffset?.(1500);
+
+                const row = document.getElementById(`stop-item-${closest.stop.seq}`);
+                if (row) {
+                    row.classList.add('nearest-stop');
+                    let badge = row.querySelector('.nearest-stop-badge');
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'nearest-stop-badge';
+                        row.querySelector('.stop-name')?.appendChild(badge);
+                    }
+                    badge.textContent = `最近 · ${distance}`;
+                }
+
+                const card = document.getElementById('map-nearest-card');
+                const name = document.getElementById('map-nearest-name');
+                const distanceNode = document.getElementById('map-nearest-distance');
+                if (card && name && distanceNode) {
+                    name.textContent = closest.stop.name || '未命名站牌';
+                    distanceNode.textContent = distance;
+                    card.hidden = false;
+                }
             },
 
             locationErrorMessage(error) {
@@ -3293,8 +3469,9 @@
                     
                     if (this.state.routeMap) {
                         this.state.routeMap.remove();
-                        if (this.state.gpsWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(this.state.gpsWatchId);
-                        this.state.gpsWatchId = null; this.state.userLocationMarker = null; 
+                    if (this.state.gpsWatchId !== null && navigator.geolocation) navigator.geolocation.clearWatch(this.state.gpsWatchId);
+                    this.state.gpsWatchId = null; this.state.userLocationMarker = null; 
+                    this.clearNearestMapStop();
                         this.state.isLocationRequesting = false;
                         document.getElementById('map-gps-btn').classList.remove('tracking');
                         document.getElementById('map-location-status').hidden = true;
@@ -3381,6 +3558,7 @@
                 document.body.classList.remove('map-open');
                 document.getElementById('map-route-card').hidden = true;
                 document.getElementById('map-location-status').hidden = true;
+                this.clearNearestMapStop();
                 if (this.state.gpsWatchId !== null && navigator.geolocation) { navigator.geolocation.clearWatch(this.state.gpsWatchId); this.state.gpsWatchId = null; }
                 this.state.isLocationRequesting = false;
                 document.getElementById('map-gps-btn').classList.remove('requesting', 'tracking');

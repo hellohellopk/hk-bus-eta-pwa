@@ -1256,6 +1256,21 @@
         .nearby-route-eta { min-width:52px; color:#b62d3e; font-family:var(--font-data, monospace); font-size:11px; font-weight:900; text-align:right; white-space:nowrap; }
         .nearby-route-eta.loading { color:var(--eta-ink-soft); font-size:10px; }
         .nearby-route-empty { padding:14px 8px; color:var(--eta-ink-soft); font-family:var(--font-ui); font-size:12px; font-weight:650; text-align:center; }
+        /* Nearby route rows follow the favourite-card information hierarchy: operator colour, destination, fare, then two ETAs. */
+        .nearby-route-panel .nearby-fav-route-card { min-height:58px!important; margin:0!important; padding:7px 9px 7px 7px!important; border:1px solid rgba(11,30,50,.14)!important; border-left:5px solid transparent!important; border-radius:0!important; box-shadow:none!important; cursor:default; }
+        .nearby-route-panel .nearby-fav-route-card.op-kmb { border-left-color:#ce3043!important; } .nearby-route-panel .nearby-fav-route-card.op-ctb { border-left-color:#e7b600!important; } .nearby-route-panel .nearby-fav-route-card.op-nlb { border-left-color:#0072c6!important; } .nearby-route-panel .nearby-fav-route-card.op-gmb { border-left-color:#008f4c!important; } .nearby-route-panel .nearby-fav-route-card.op-lightRail { border-left-color:#e7e7e7!important; } .nearby-route-panel .nearby-fav-route-card.op-lrtfeeder { border-left-color:#f57c00!important; }
+        .nearby-route-panel .nearby-fav-route-card .bus-left { min-width:0!important; gap:9px!important; }
+        .nearby-route-panel .nearby-fav-route-card .route-badge { min-width:50px!important; height:29px!important; padding:0 5px!important; font-size:17px!important; }
+        .nearby-route-panel .nearby-fav-route-card .destination { overflow:hidden; font-size:15px!important; line-height:1.16!important; text-overflow:ellipsis; white-space:nowrap; }
+        .nearby-route-panel .nearby-fav-route-card .station-name-sub { display:none!important; }
+        .nearby-route-panel .nearby-fav-route-card .fare-watermark { margin-right:2px!important; color:var(--eta-danger)!important; opacity:1!important; font-size:15px!important; font-weight:850!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-list { min-width:54px!important; gap:0!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-list::before { display:none!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-primary,.nearby-route-panel .nearby-fav-route-card .eta-secondary { display:flex; justify-content:flex-end; align-items:center; min-height:17px; line-height:1!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-primary strong { font-size:20px!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-secondary strong { font-size:14px!important; }
+        .nearby-route-panel .nearby-fav-route-card .eta-arriving-pulse { font-size:16px!important; }
+        @media (max-width:520px) { .nearby-route-panel .nearby-fav-route-card { min-height:52px!important; padding:5px 7px 5px 6px!important; } .nearby-route-panel .nearby-fav-route-card .bus-left { gap:7px!important; } .nearby-route-panel .nearby-fav-route-card .route-badge { min-width:45px!important; height:26px!important; font-size:20px!important; } .nearby-route-panel .nearby-fav-route-card .destination { font-size:15px!important; } .nearby-route-panel .nearby-fav-route-card .fare-watermark { font-size:14px!important; margin-right:0!important; } .nearby-route-panel .nearby-fav-route-card .eta-list { min-width:47px!important; } .nearby-route-panel .nearby-fav-route-card .eta-primary strong { font-size:19px!important; } .nearby-route-panel .nearby-fav-route-card .eta-secondary strong { font-size:13px!important; } }
         .nearby-empty { margin-top:18px; padding:30px 18px; color:var(--eta-ink-soft); border:1px dashed var(--eta-line); background:rgba(255,253,250,.72); text-align:center; font-family:var(--font-ui); font-size:14px; font-weight:650; line-height:1.65; }
         @media (max-width:520px) { .nearby-intro { padding:11px 10px; } .nearby-intro strong { font-size:16px; } .nearby-stop { grid-template-columns:32px minmax(0,1fr) auto auto; gap:7px; padding:10px 9px; } .nearby-name { font-size:14px; } .nearby-distance { font-size:12px; } .nearby-route-panel { padding:8px; } .nearby-route-row { grid-template-columns:43px minmax(0,1fr) 47px; gap:6px; padding:6px; } .nearby-route-badge { min-width:38px; font-size:14px; } }
     </style>
@@ -3252,7 +3267,8 @@
                             destination: entry.dest?.zh || entry.dest?.en || '未提供目的地',
                             bound: entry.bound?.[rawOperator] || entry.bound?.[operator] || 'O',
                             nlbRouteId: entry.nlbId || entry.nlb_routeId || null,
-                            stopId: String(stopId)
+                            stopId: String(stopId),
+                            fare: (() => { const stopIndex = stopIds.findIndex(id => String(id) === String(stopId)); return stopIndex >= 0 ? entry.fares?.[stopIndex] : null; })()
                         });
                     });
                 });
@@ -3261,6 +3277,14 @@
 
             getNearbyOperatorLabel(operator) {
                 return ({ kmb:'九巴', ctb:'城巴', nlb:'大嶼山巴士', gmb:'專線小巴', lightRail:'輕鐵', lrtfeeder:'港鐵巴士' })[this.normalizeOperator(operator)] || '巴士';
+            },
+
+            getNearbyRouteStyle(operator) {
+                const op = this.normalizeOperator(operator);
+                return {
+                    badgeClass: ({ kmb:'bg-kmb', ctb:'bg-ctb', nlb:'bg-nlb', gmb:'bg-gmb', lightRail:'bg-lightRail', lrtfeeder:'bg-lrtfeeder' })[op] || 'bg-kmb',
+                    cardClass: `op-${op}`
+                };
             },
 
             escapeNearbyHTML(value) {
@@ -3319,8 +3343,12 @@
             },
 
             formatNearbyETAs(etas) {
-                if (!etas?.length) return '暫無班次';
-                return etas.map(eta => eta.min === 0 ? '就到' : `${eta.min} 分`).join(' · ');
+                if (!etas?.length) return '<div class="eta-row no-data">暫無班次</div>';
+                return etas.slice(0, 2).map((eta, index) => {
+                    const arriving = eta.min === 0;
+                    const text = arriving ? '<span class="eta-arriving-pulse">就到</span>' : `<strong>${eta.min}</strong>`;
+                    return `<div class="eta-row ${index === 0 ? 'eta-primary' : 'eta-secondary'}${arriving ? ' eta-is-arriving' : ''}">${text}</div>`;
+                }).join('');
             },
 
             async loadNearbyRouteETAs(routes, token) {
@@ -3331,9 +3359,9 @@
                         const slot = document.getElementById(`nearby-route-eta-${token}-${index}`);
                         try {
                             const etas = await this.fetchNearbyRouteETAs(routes[index]);
-                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.textContent = this.formatNearbyETAs(etas); }
+                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.innerHTML = this.formatNearbyETAs(etas); }
                         } catch (error) {
-                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.textContent = '暫不可用'; }
+                            if (this.state.nearbyRouteRenderToken === token && slot) { slot.classList.remove('loading'); slot.innerHTML = '<div class="eta-row no-data">暫不可用</div>'; }
                         }
                     }
                 });
@@ -3349,7 +3377,7 @@
                 const panel = document.getElementById(`nearby-routes-${stopId}`);
                 if (!panel) return;
                 if (!routes.length) { panel.innerHTML = '<div class="nearby-route-empty">暫未找到此站的途經巴士路線。</div>'; return; }
-                panel.innerHTML = `<div class="nearby-route-panel-title">途經路線 · ${routes.length} 條</div><div class="nearby-route-list">${routes.map((item, index) => `<div class="nearby-route-row"><span class="nearby-route-badge" style="--route-color:${this.getPrimaryColor(item.operator)}">${this.escapeNearbyHTML(item.route)}</span><div><div class="nearby-route-dest">往 ${this.escapeNearbyHTML(item.destination)}</div><div class="nearby-route-operator">${this.getNearbyOperatorLabel(item.operator)}</div></div><span class="nearby-route-eta loading" id="nearby-route-eta-${token}-${index}">載入 ETA…</span></div>`).join('')}</div>`;
+                panel.innerHTML = `<div class="nearby-route-panel-title">途經路線 · ${routes.length} 條</div><div class="nearby-route-list">${routes.map((item, index) => { const style = this.getNearbyRouteStyle(item.operator); const fare = item.fare !== undefined && item.fare !== null && item.fare !== '' ? `<div class="fare-watermark">$${this.escapeNearbyHTML(String(item.fare).replace(/^\$/, ''))}</div>` : ''; return `<div class="route-card nearby-fav-route-card ${style.cardClass}"><div class="bus-left"><div class="route-badge ${style.badgeClass}">${this.escapeNearbyHTML(item.route)}</div><div class="route-info"><div class="destination">往 ${this.escapeNearbyHTML(item.destination)}</div></div></div>${fare}<div class="eta-list nearby-route-eta loading" id="nearby-route-eta-${token}-${index}"><div class="eta-row eta-primary">…</div></div></div>`; }).join('')}</div>`;
                 this.loadNearbyRouteETAs(routes, token);
             },
 
